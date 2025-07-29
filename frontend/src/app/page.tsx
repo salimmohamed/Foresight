@@ -59,7 +59,7 @@ export default function Home() {
         <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-8">How It Works</h2>
         <div className="max-w-3xl mx-auto text-center text-gray-700 text-lg">
           <p className="mb-4">
-            <span className="font-semibold text-blue-700">Foresight</span> integrates with <span className="font-semibold">Alpha Vantage</span> for real-time stock data, <span className="font-semibold">NewsAPI</span> for the latest financial news, and uses <span className="font-semibold">SMTP</span> to deliver instant email alerts. The backend processes your custom alert rules, monitors price changes, and analyzes news sentiment—all so you can stay ahead in the market.
+            <span className="font-semibold text-blue-700">Foresight</span> integrates with <span className="font-semibold">Finnhub</span> for real-time stock data, <span className="font-semibold">NewsAPI</span> for the latest financial news, and uses <span className="font-semibold">SMTP</span> to deliver instant email alerts. The backend processes your custom alert rules, monitors price changes, and analyzes news sentiment—all so you can stay ahead in the market.
           </p>
         </div>
       </section>

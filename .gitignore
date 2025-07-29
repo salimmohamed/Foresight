@@ -299,3 +299,4 @@ config.local.*
 settings.local.*
 temp_commit_message.txt
 v0.md
+test_api.py
