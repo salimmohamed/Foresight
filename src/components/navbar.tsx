@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DATA } from "@/data/resume";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 import Link from "next/link";
 
 export default function Navbar() {
