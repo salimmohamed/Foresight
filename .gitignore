@@ -292,8 +292,10 @@ GEMINI.md
 .project_config
 .project_config/
 repomix-output.xml
+Foresight.xml
 
 # Local configuration files
 config.local.*
 settings.local.*
 temp_commit_message.txt
+v0.md
