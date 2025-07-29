@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
 @layer base {
     :root {
       --background: 0 0% 100%;
@@ -67,6 +77,9 @@
   }
 
   @layer base {
+    html {
+      scroll-behavior: smooth;
+    }
     * {
       @apply border-border;
     }

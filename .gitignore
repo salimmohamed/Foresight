@@ -293,6 +293,7 @@ GEMINI.md
 .project_config/
 repomix-output.xml
 Foresight.xml
+Prompts/
 
 # Local configuration files
 config.local.*
@@ -300,3 +301,4 @@ settings.local.*
 temp_commit_message.txt
 v0.md
 test_api.py
+.gitignore
