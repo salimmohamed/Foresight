@@ -1,6 +1,7 @@
 "use client"
 
 import DemoPage from "@/components/DemoPage/DemoPage"
+import { ProtectedRoute } from "@/components/Auth/ProtectedRoute"
 
 export default function DashboardPage() {
   const handleThemeToggle = () => {
@@ -20,14 +21,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <DemoPage
-      userName="Sarah Johnson"
-      userEmail="sarah.johnson@example.com"
-      notificationCount={5}
-      onThemeToggle={handleThemeToggle}
-      onLogout={handleLogout}
-      onProfileClick={handleProfileClick}
-      onSettingsClick={handleSettingsClick}
-    />
+    <ProtectedRoute>
+      <DemoPage
+        notificationCount={5}
+        onThemeToggle={handleThemeToggle}
+        onLogout={handleLogout}
+        onProfileClick={handleProfileClick}
+        onSettingsClick={handleSettingsClick}
+      />
+    </ProtectedRoute>
   )
 } 

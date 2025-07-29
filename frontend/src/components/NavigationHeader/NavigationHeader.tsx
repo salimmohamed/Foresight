@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 import styles from './NavigationHeader.module.css'
 
 interface NavigationHeaderProps {
@@ -29,8 +31,8 @@ interface NavigationHeaderProps {
 
 export function NavigationHeader({
   currentPath = "/dashboard",
-  userName = "John Doe",
-  userEmail = "john@example.com",
+  userName,
+  userEmail,
   userAvatar,
   notificationCount = 3,
   onThemeToggle,
@@ -39,8 +41,14 @@ export function NavigationHeader({
   onSettingsClick,
 }: NavigationHeaderProps) {
   const { theme, setTheme } = useTheme()
+  const { user, signOut } = useAuth()
+  const router = useRouter()
   const [mounted, setMounted] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+
+  // Use auth user data if available, otherwise fall back to props
+  const displayName = user?.user_metadata?.full_name || userName || "User"
+  const displayEmail = user?.email || userEmail || "user@example.com"
 
   const navigationItems = [
     { name: "Home", href: "/", icon: Home },
@@ -143,9 +151,9 @@ export function NavigationHeader({
                   <Avatar className={styles.avatar}>
                     <AvatarImage src={userAvatar || "/placeholder.svg"} alt={userName} />
                     <AvatarFallback className={styles.avatarFallback}>
-                      {userName
+                      {displayName
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")
                         .toUpperCase()}
                     </AvatarFallback>
@@ -155,8 +163,8 @@ export function NavigationHeader({
               <DropdownMenuContent className={styles.dropdownContent} align="end" forceMount>
                 <DropdownMenuLabel className={styles.dropdownLabel}>
                   <div className={styles.userInfo}>
-                    <p className={styles.userName}>{userName}</p>
-                    <p className={styles.userEmail}>{userEmail}</p>
+                    <p className={styles.userName}>{displayName}</p>
+                    <p className={styles.userEmail}>{displayEmail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -169,7 +177,10 @@ export function NavigationHeader({
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout}>
+                <DropdownMenuItem onClick={() => {
+                  signOut()
+                  router.push('/auth')
+                }}>
                   <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

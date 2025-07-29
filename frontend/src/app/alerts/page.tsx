@@ -2,6 +2,7 @@
 
 import { NavigationHeader } from "@/components/NavigationHeader/NavigationHeader"
 import AlertsPage from "@/components/AlertsPage/AlertsPage"
+import { ProtectedRoute } from "@/components/Auth/ProtectedRoute"
 
 export default function AlertsPageWrapper() {
   const handleThemeToggle = () => {
@@ -21,23 +22,23 @@ export default function AlertsPageWrapper() {
   }
 
   return (
-    <div>
-      <NavigationHeader
-        currentPath="/alerts"
-        userName="Sarah Johnson"
-        userEmail="sarah.johnson@example.com"
-        notificationCount={5}
-        onThemeToggle={handleThemeToggle}
-        onLogout={handleLogout}
-        onProfileClick={handleProfileClick}
-        onSettingsClick={handleSettingsClick}
-      />
-      <AlertsPage
-        onThemeToggle={handleThemeToggle}
-        onLogout={handleLogout}
-        onProfileClick={handleProfileClick}
-        onSettingsClick={handleSettingsClick}
-      />
-    </div>
+    <ProtectedRoute>
+      <div>
+        <NavigationHeader
+          currentPath="/alerts"
+          notificationCount={5}
+          onThemeToggle={handleThemeToggle}
+          onLogout={handleLogout}
+          onProfileClick={handleProfileClick}
+          onSettingsClick={handleSettingsClick}
+        />
+        <AlertsPage
+          onThemeToggle={handleThemeToggle}
+          onLogout={handleLogout}
+          onProfileClick={handleProfileClick}
+          onSettingsClick={handleSettingsClick}
+        />
+      </div>
+    </ProtectedRoute>
   )
 } 
