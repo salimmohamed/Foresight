@@ -13,6 +13,11 @@ export const DATA = {
       label: "home",
     },
     {
+      href: "/market",
+      icon: Icons.globe,
+      label: "market",
+    },
+    {
       href: "/dashboard",
       icon: Icons.globe,
       label: "dashboard",
