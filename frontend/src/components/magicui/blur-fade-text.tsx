@@ -45,14 +45,15 @@ const BlurFadeText = ({
               exit="hidden"
               variants={combinedVariants}
               transition={{
-                yoyo: Infinity,
+                repeat: Infinity,
+                repeatType: "reverse",
                 delay: delay + i * characterDelay,
                 ease: "easeOut",
               }}
               className={cn("inline-block", className)}
               style={{ width: char.trim() === "" ? "0.2em" : "auto" }}
             >
-              {char
+              {char}
             </motion.span>
           ))}
         </AnimatePresence>
@@ -69,7 +70,8 @@ const BlurFadeText = ({
           exit="hidden"
           variants={combinedVariants}
           transition={{
-            yoyo: Infinity,
+            repeat: Infinity,
+            repeatType: "reverse",
             delay,
             ease: "easeOut",
           }}

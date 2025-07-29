@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import Navbar from "@/components/navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Stocks Project",
-  description: "A stock monitoring and alert application.",
+  title: "Foresight - AI-Powered Trading Insights",
+  description: "Leverage AI to monitor stock markets, analyze news sentiment, and receive intelligent trading insights.",
 };
 
 export default function RootLayout({
@@ -28,7 +27,6 @@ export default function RootLayout({
         >
           <TooltipProvider>
             {children}
-            <Navbar />
           </TooltipProvider>
         </ThemeProvider>
       </body>

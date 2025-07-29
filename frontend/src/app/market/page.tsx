@@ -1,20 +1,51 @@
+"use client"
+
 import { Suspense } from "react"
+import { NavigationHeader } from "@/components/NavigationHeader/NavigationHeader"
 import StockDashboard from "@/components/StockDashboard"
 import StockCardSkeleton from "@/components/StockCardSkeleton"
 
 export default function MarketPage() {
+  const handleThemeToggle = () => {
+    console.log("Theme toggled")
+  }
+
+  const handleLogout = () => {
+    console.log("Logout clicked")
+  }
+
+  const handleProfileClick = () => {
+    console.log("Profile clicked")
+  }
+
+  const handleSettingsClick = () => {
+    console.log("Settings clicked")
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Market Overview</h1>
-        <p className="text-gray-600">
-          Real-time stock data and market insights powered by Finnhub
-        </p>
+    <div>
+      <NavigationHeader
+        currentPath="/market"
+        userName="Sarah Johnson"
+        userEmail="sarah.johnson@example.com"
+        notificationCount={5}
+        onThemeToggle={handleThemeToggle}
+        onLogout={handleLogout}
+        onProfileClick={handleProfileClick}
+        onSettingsClick={handleSettingsClick}
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Market Overview</h1>
+          <p className="text-gray-600">
+            Real-time stock data and market insights powered by Finnhub
+          </p>
+        </div>
+        
+        <Suspense fallback={<StockDashboardSkeleton />}>
+          <StockDashboard />
+        </Suspense>
       </div>
-      
-      <Suspense fallback={<StockDashboardSkeleton />}>
-        <StockDashboard />
-      </Suspense>
     </div>
   )
 }

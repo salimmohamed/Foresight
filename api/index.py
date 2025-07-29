@@ -268,6 +268,220 @@ def get_stock(symbol):
         "status": "active" if metrics["current_price"] > 0 else "inactive"
     })
 
+@app.route('/api/dashboard/portfolio', methods=['GET'])
+def get_portfolio_data():
+    """Get portfolio overview data."""
+    try:
+        # Get stock data for portfolio holdings
+        portfolio_symbols = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'NVDA']
+        portfolio_data = []
+        total_value = 0
+        total_change = 0
+        
+        for symbol in portfolio_symbols:
+            stock_data = get_stock_data(symbol)
+            if "error" not in stock_data and "mock" not in stock_data:
+                metrics = get_stock_metrics(stock_data)
+                # Simulate portfolio holdings (random shares between 10-100)
+                shares = random.randint(10, 100)
+                position_value = shares * metrics["current_price"]
+                position_change = shares * metrics["price_change"]
+                
+                portfolio_data.append({
+                    "symbol": symbol,
+                    "shares": shares,
+                    "currentPrice": metrics["current_price"],
+                    "positionValue": position_value,
+                    "positionChange": position_change,
+                    "changePercent": metrics["change_percent"]
+                })
+                
+                total_value += position_value
+                total_change += position_change
+            else:
+                # Use mock data for portfolio
+                metrics = generate_mock_stock_data(symbol)
+                shares = random.randint(10, 100)
+                position_value = shares * metrics["current_price"]
+                position_change = shares * metrics["price_change"]
+                
+                portfolio_data.append({
+                    "symbol": symbol,
+                    "shares": shares,
+                    "currentPrice": metrics["current_price"],
+                    "positionValue": position_value,
+                    "positionChange": position_change,
+                    "changePercent": metrics["change_percent"]
+                })
+                
+                total_value += position_value
+                total_change += position_change
+        
+        # Calculate portfolio change percentage
+        portfolio_change_percent = (total_change / (total_value - total_change)) * 100 if (total_value - total_change) > 0 else 0
+        
+        return jsonify({
+            "totalValue": round(total_value, 2),
+            "totalChange": round(total_change, 2),
+            "changePercent": round(portfolio_change_percent, 2),
+            "holdings": portfolio_data
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting portfolio data: {e}")
+        return jsonify({
+            "totalValue": 45231.89,
+            "totalChange": 7562.34,
+            "changePercent": 20.1,
+            "holdings": []
+        })
+
+@app.route('/api/dashboard/alerts', methods=['GET'])
+def get_alerts_data():
+    """Get alerts overview data."""
+    try:
+        # Simulate alert data
+        active_alerts = random.randint(8, 15)
+        triggered_today = random.randint(1, 5)
+        
+        return jsonify({
+            "activeAlerts": active_alerts,
+            "triggeredToday": triggered_today,
+            "recentAlerts": [
+                {
+                    "id": "1",
+                    "type": "success",
+                    "title": "AAPL price alert triggered",
+                    "time": "2 minutes ago",
+                    "symbol": "AAPL",
+                    "price": 185.50
+                },
+                {
+                    "id": "2", 
+                    "type": "info",
+                    "title": "News alert: Tesla earnings report",
+                    "time": "15 minutes ago",
+                    "symbol": "TSLA",
+                    "price": 245.20
+                },
+                {
+                    "id": "3",
+                    "type": "warning", 
+                    "title": "Portfolio rebalancing suggestion",
+                    "time": "1 hour ago",
+                    "symbol": "NVDA",
+                    "price": 485.75
+                }
+            ]
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting alerts data: {e}")
+        return jsonify({
+            "activeAlerts": 12,
+            "triggeredToday": 3,
+            "recentAlerts": []
+        })
+
+@app.route('/api/dashboard/market-leaders', methods=['GET'])
+def get_market_leaders():
+    """Get top gainers and losers."""
+    try:
+        # Get data for major stocks to determine leaders
+        symbols = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'NVDA', 'AMZN', 'META', 'NFLX']
+        stock_data_list = []
+        
+        for symbol in symbols:
+            stock_data = get_stock_data(symbol)
+            if "error" not in stock_data and "mock" not in stock_data:
+                metrics = get_stock_metrics(stock_data)
+                stock_data_list.append({
+                    "symbol": symbol,
+                    "changePercent": metrics["change_percent"],
+                    "currentPrice": metrics["current_price"]
+                })
+            else:
+                metrics = generate_mock_stock_data(symbol)
+                stock_data_list.append({
+                    "symbol": symbol,
+                    "changePercent": metrics["change_percent"],
+                    "currentPrice": metrics["current_price"]
+                })
+        
+        # Sort by change percentage
+        sorted_stocks = sorted(stock_data_list, key=lambda x: x["changePercent"], reverse=True)
+        
+        top_gainer = sorted_stocks[0] if sorted_stocks else {"symbol": "AAPL", "changePercent": 5.2, "currentPrice": 185.50}
+        top_loser = sorted_stocks[-1] if sorted_stocks else {"symbol": "TSLA", "changePercent": -2.8, "currentPrice": 245.20}
+        
+        return jsonify({
+            "topGainer": {
+                "symbol": top_gainer["symbol"],
+                "change": f"{top_gainer['changePercent']:+.1f}% today",
+                "price": top_gainer["currentPrice"]
+            },
+            "topLoser": {
+                "symbol": top_loser["symbol"], 
+                "change": f"{top_loser['changePercent']:+.1f}% today",
+                "price": top_loser["currentPrice"]
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Error getting market leaders: {e}")
+        return jsonify({
+            "topGainer": {"symbol": "AAPL", "change": "+5.2% today", "price": 185.50},
+            "topLoser": {"symbol": "TSLA", "change": "-2.8% today", "price": 245.20}
+        })
+
+@app.route('/api/dashboard/activities', methods=['GET'])
+def get_recent_activities():
+    """Get recent user activities."""
+    try:
+        activities = [
+            {
+                "id": "1",
+                "type": "success",
+                "title": "AAPL price alert triggered",
+                "time": "2 minutes ago",
+                "details": "Stock price reached $185.50"
+            },
+            {
+                "id": "2",
+                "type": "info", 
+                "title": "News alert: Tesla earnings report",
+                "time": "15 minutes ago",
+                "details": "Q4 earnings beat expectations"
+            },
+            {
+                "id": "3",
+                "type": "warning",
+                "title": "Portfolio rebalancing suggestion", 
+                "time": "1 hour ago",
+                "details": "Consider reducing NVDA position"
+            },
+            {
+                "id": "4",
+                "type": "success",
+                "title": "GOOGL alert set successfully",
+                "time": "2 hours ago", 
+                "details": "Price alert at $2800"
+            },
+            {
+                "id": "5",
+                "type": "info",
+                "title": "Market open notification",
+                "time": "3 hours ago",
+                "details": "Trading session started"
+            }
+        ]
+        
+        return jsonify(activities)
+        
+    except Exception as e:
+        print(f"❌ Error getting activities: {e}")
+        return jsonify([])
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
