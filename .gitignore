@@ -450,6 +450,9 @@ GEMINI.md
 repomix-output.xml
 Foresight.xml
 Prompts/
+Project/
+api/
+__pycache__/
 
 # Local configuration files
 config.local.*
