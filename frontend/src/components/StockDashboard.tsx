@@ -78,7 +78,7 @@ export default function StockDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</div>
+        <div className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleTimeString()}</div>
         <Button onClick={handleRefresh} variant="outline" size="sm" disabled={refreshing}>
           <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
           Refresh

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTheme } from "next-themes"
 import styles from './NavigationHeader.module.css'
 
 interface NavigationHeaderProps {
@@ -37,7 +38,8 @@ export function NavigationHeader({
   onProfileClick,
   onSettingsClick,
 }: NavigationHeaderProps) {
-  const [isDarkMode, setIsDarkMode] = React.useState(false)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
 
   const navigationItems = [
@@ -47,10 +49,12 @@ export function NavigationHeader({
     { name: "Alerts", href: "/alerts", icon: Bell },
   ]
 
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-    // In a real app, you'd update your theme context or localStorage here
-    document.documentElement.classList.toggle("dark")
+    setTheme(theme === "dark" ? "light" : "dark")
     onThemeToggle?.()
   }
 
@@ -124,8 +128,11 @@ export function NavigationHeader({
 
             {/* Theme toggle */}
             <Button variant="ghost" size="icon" onClick={toggleTheme} className={styles.themeButton}>
-              <Sun className={styles.sunIcon} />
-              <Moon className={styles.moonIcon} />
+              {mounted && theme === "dark" ? (
+                <Sun className={styles.sunIcon} />
+              ) : (
+                <Moon className={styles.moonIcon} />
+              )}
               <span className={styles.srOnly}>Toggle theme</span>
             </Button>
 

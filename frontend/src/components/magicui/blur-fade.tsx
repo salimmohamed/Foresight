@@ -15,7 +15,7 @@ interface BlurFadeProps {
   delay?: number;
   yOffset?: number;
   inView?: boolean;
-  inViewMargin?: string | number;
+  inViewMargin?: string;
   blur?: string;
 }
 
@@ -31,7 +31,7 @@ const BlurFade = ({
   blur = "8px",
 }: BlurFadeProps) => {
   const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: true, margin: inViewMargin });
+  const isInView = useInView(ref, { once: true, margin: inViewMargin as any });
   const defaultVariants = {
     hidden: { y: yOffset, opacity: 0, filter: `blur(${blur})` },
     visible: { y: 0, opacity: 1, filter: `blur(0px)` },

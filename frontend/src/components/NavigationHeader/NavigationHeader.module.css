@@ -149,6 +149,7 @@
   gap: 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
+  margin-right: 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -236,20 +237,11 @@
   transition: all 0.2s;
 }
 
-.dark .sunIcon {
-  transform: rotate(-90deg) scale(0);
-}
-
 .moonIcon {
-  position: absolute;
   height: 1rem;
   width: 1rem;
-  transform: rotate(90deg) scale(0);
-  transition: all 0.2s;
-}
-
-.dark .moonIcon {
   transform: rotate(0deg) scale(1);
+  transition: all 0.2s;
 }
 
 .avatarButton {

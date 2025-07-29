@@ -1,9 +1,9 @@
 "use client"
 
 import { NavigationHeader } from "@/components/NavigationHeader/NavigationHeader"
-import StockMonitoringForm from "@/components/stock-monitoring-form"
+import AlertsPage from "@/components/AlertsPage/AlertsPage"
 
-export default function AlertsPage() {
+export default function AlertsPageWrapper() {
   const handleThemeToggle = () => {
     console.log("Theme toggled")
   }
@@ -32,9 +32,12 @@ export default function AlertsPage() {
         onProfileClick={handleProfileClick}
         onSettingsClick={handleSettingsClick}
       />
-      <main>
-        <StockMonitoringForm />
-      </main>
+      <AlertsPage
+        onThemeToggle={handleThemeToggle}
+        onLogout={handleLogout}
+        onProfileClick={handleProfileClick}
+        onSettingsClick={handleSettingsClick}
+      />
     </div>
   )
 } 
