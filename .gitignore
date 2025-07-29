@@ -296,3 +296,4 @@ repomix-output.xml
 # Local configuration files
 config.local.*
 settings.local.*
+temp_commit_message.txt

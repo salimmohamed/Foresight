@@ -52,7 +52,7 @@ const BlurFadeText = ({
               className={cn("inline-block", className)}
               style={{ width: char.trim() === "" ? "0.2em" : "auto" }}
             >
-              {char}
+              {char
             </motion.span>
           ))}
         </AnimatePresence>
