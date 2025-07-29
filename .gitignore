@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Gemini
+GEMINI.md
+.project_config
+.project_config/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Build and Distribution
+dist/
+build/
+*.egg-info/
