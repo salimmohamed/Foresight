@@ -69,8 +69,10 @@ def send_email(subject, body):
         print("If using Gmail, ensure 'Less secure app access' is enabled or use an App Password.")
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def process_stock_alert(symbol, company_name, threshold, num_articles):
     try:

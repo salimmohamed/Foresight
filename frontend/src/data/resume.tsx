@@ -10,17 +10,17 @@ export const DATA = {
     {
       href: "/",
       icon: Icons.globe,
-      label: "Home",
+      label: "home",
     },
     {
       href: "/dashboard",
       icon: Icons.globe,
-      label: "Dashboard",
+      label: "dashboard",
     },
     {
       href: "/alerts",
       icon: Icons.email,
-      label: "Alerts",
+      label: "alerts",
     },
   ],
   contact: {
