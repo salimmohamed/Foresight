@@ -1,75 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AlertForm } from "./AlertForm"
 import { AlertsTable } from "./AlertsTable"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bell, BellRing, Plus, TrendingUp, AlertTriangle } from "lucide-react"
+import { Bell, BellRing, Plus, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react"
 import styles from "./AlertsPage.module.css"
-
-// Sample data
-const initialAlerts = [
-  {
-    id: "1",
-    symbol: "AAPL",
-    company: "Apple Inc.",
-    alertType: "price-above",
-    threshold: "180.00",
-    status: "active" as const,
-    createdAt: "2024-01-15T10:30:00Z",
-    lastTriggered: "2024-01-20T14:22:00Z",
-    emailNotifications: true,
-    inAppNotifications: true,
-  },
-  {
-    id: "2",
-    symbol: "TSLA",
-    company: "Tesla, Inc.",
-    alertType: "percentage-loss",
-    percentage: "5.0",
-    status: "triggered" as const,
-    createdAt: "2024-01-10T09:15:00Z",
-    lastTriggered: "2024-01-22T11:45:00Z",
-    emailNotifications: true,
-    inAppNotifications: false,
-  },
-  {
-    id: "3",
-    symbol: "NVDA",
-    company: "NVIDIA Corporation",
-    alertType: "volume-spike",
-    status: "active" as const,
-    createdAt: "2024-01-18T16:20:00Z",
-    emailNotifications: false,
-    inAppNotifications: true,
-  },
-  {
-    id: "4",
-    symbol: "MSFT",
-    company: "Microsoft Corporation",
-    alertType: "price-below",
-    threshold: "350.00",
-    status: "paused" as const,
-    createdAt: "2024-01-12T08:45:00Z",
-    emailNotifications: true,
-    inAppNotifications: true,
-  },
-]
-
-export interface Alert {
-  id: string
-  symbol: string
-  company: string
-  alertType: string
-  threshold?: string
-  percentage?: string
-  status: "active" | "paused" | "triggered" | "expired"
-  createdAt: string
-  lastTriggered?: string
-  emailNotifications: boolean
-  inAppNotifications: boolean
-}
+import { fetchAlerts, createAlert, updateAlert, deleteAlert, processAlerts, type Alert } from "@/services/alertService"
 
 export interface AlertsPageProps {
   onThemeToggle?: () => void
@@ -84,19 +22,55 @@ export default function AlertsPage({
   onProfileClick, 
   onSettingsClick 
 }: AlertsPageProps) {
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts)
+  const [alerts, setAlerts] = useState<Alert[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [processingAlerts, setProcessingAlerts] = useState(false)
 
-  const handleCreateAlert = (newAlert: Alert) => {
-    setAlerts([...alerts, newAlert])
+  // Load alerts on component mount
+  useEffect(() => {
+    loadAlerts()
+  }, [])
+
+  const loadAlerts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const fetchedAlerts = await fetchAlerts()
+      setAlerts(fetchedAlerts)
+    } catch (err) {
+      console.error('Error loading alerts:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load alerts')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleToggleAlert = (id: string) => {
-    setAlerts(
-      alerts.map((alert) =>
-        alert.id === id ? { ...alert, status: alert.status === "active" ? "paused" : ("active" as const) } : alert,
-      ),
-    )
+  const handleCreateAlert = async (newAlert: any) => {
+    try {
+      const createdAlert = await createAlert(newAlert)
+      setAlerts([...alerts, createdAlert])
+      setIsFormOpen(false)
+    } catch (err) {
+      console.error('Error creating alert:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create alert')
+    }
+  }
+
+  const handleToggleAlert = async (id: string) => {
+    try {
+      const alert = alerts.find(a => a.id === id)
+      if (!alert) return
+
+      const newStatus = alert.status === "active" ? "paused" : "active"
+      const updatedAlert = await updateAlert(id, { status: newStatus })
+      
+      setAlerts(alerts.map(a => a.id === id ? updatedAlert : a))
+    } catch (err) {
+      console.error('Error toggling alert:', err)
+      setError(err instanceof Error ? err.message : 'Failed to toggle alert')
+    }
   }
 
   const handleEditAlert = (id: string) => {
@@ -104,14 +78,49 @@ export default function AlertsPage({
     console.log("Edit alert:", id)
   }
 
-  const handleDeleteAlert = (id: string) => {
-    setAlerts(alerts.filter((alert) => alert.id !== id))
+  const handleDeleteAlert = async (id: string) => {
+    try {
+      await deleteAlert(id)
+      setAlerts(alerts.filter(alert => alert.id !== id))
+    } catch (err) {
+      console.error('Error deleting alert:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete alert')
+    }
+  }
+
+  const handleProcessAlerts = async () => {
+    try {
+      setProcessingAlerts(true)
+      await processAlerts()
+      // Reload alerts to get updated status
+      await loadAlerts()
+    } catch (err) {
+      console.error('Error processing alerts:', err)
+      setError(err instanceof Error ? err.message : 'Failed to process alerts')
+    } finally {
+      setProcessingAlerts(false)
+    }
   }
 
   const activeAlerts = alerts.filter((alert) => alert.status === "active").length
   const triggeredThisWeek = alerts.filter(
     (alert) => alert.lastTriggered && new Date(alert.lastTriggered) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   ).length
+
+  if (loading) {
+    return (
+      <div className={styles["min-h-screen"]}>
+        <main className={styles["container"]}>
+          <div className={styles["page-header"]}>
+            <div>
+              <h1 className={styles["page-title"]}>Stock Alerts</h1>
+              <p className={styles["page-description"]}>Loading alerts...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className={styles["min-h-screen"]}>
@@ -122,11 +131,28 @@ export default function AlertsPage({
             <h1 className={styles["page-title"]}>Stock Alerts</h1>
             <p className={styles["page-description"]}>Monitor your investments with intelligent alerts and notifications</p>
           </div>
-          <Button onClick={() => setIsFormOpen(true)} className={styles["create-button"]}>
-            <Plus className={styles["button-icon"]} />
-            Create Alert
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleProcessAlerts} 
+              disabled={processingAlerts}
+              variant="outline"
+              className={styles["create-button"]}
+            >
+              <RefreshCw className={`${styles["button-icon"]} ${processingAlerts ? 'animate-spin' : ''}`} />
+              {processingAlerts ? 'Processing...' : 'Process Alerts'}
+            </Button>
+            <Button onClick={() => setIsFormOpen(true)} className={styles["create-button"]}>
+              <Plus className={styles["button-icon"]} />
+              Create Alert
+            </Button>
+          </div>
         </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
 
         {/* Statistics Cards */}
         <div className={styles["stats-grid"]}>

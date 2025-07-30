@@ -10,12 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { X } from "lucide-react"
-import { Alert } from "./AlertsPage"
+import { CreateAlertData } from "@/services/alertService"
 
 interface AlertFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (alert: Alert) => void
+  onSubmit: (alert: CreateAlertData) => void
 }
 
 export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
@@ -32,13 +32,23 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
-      ...formData,
-      id: Date.now().toString(),
-      status: "active",
-      createdAt: new Date().toISOString(),
-      lastTriggered: undefined,
-    })
+    
+    const alertData: CreateAlertData = {
+      symbol: formData.symbol,
+      companyName: formData.company || undefined,
+      alertType: formData.alertType,
+      emailNotifications: formData.emailNotifications,
+      inAppNotifications: formData.inAppNotifications,
+    }
+    
+    // Add threshold or percentage based on alert type
+    if (formData.alertType === "price-above" || formData.alertType === "price-below") {
+      alertData.threshold = parseFloat(formData.threshold)
+    } else if (formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss") {
+      alertData.percentage = parseFloat(formData.percentage)
+    }
+    
+    onSubmit(alertData)
     setFormData({
       symbol: "",
       company: "",

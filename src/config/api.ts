@@ -13,4 +13,8 @@ export const API_ENDPOINTS = {
   marketLeaders: `${API_BASE_URL}/api/dashboard/market-leaders`,
   activities: `${API_BASE_URL}/api/dashboard/activities`,
   health: `${API_BASE_URL}/api/health`,
+  // Alert management endpoints
+  alertManagement: `${API_BASE_URL}/api/alerts`,
+  alert: (id: string) => `${API_BASE_URL}/api/alerts/${id}`,
+  processAlerts: `${API_BASE_URL}/api/alerts/process`,
 }; 

@@ -5,6 +5,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import random
 from datetime import datetime, timedelta
+import json
+import uuid
 
 load_dotenv()
 
@@ -14,6 +16,62 @@ CORS(app)
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
+
+# Alert storage (in production, use a proper database)
+ALERTS_FILE = "alerts.json"
+
+def load_alerts():
+    """Load alerts from JSON file."""
+    try:
+        if os.path.exists(ALERTS_FILE):
+            with open(ALERTS_FILE, 'r') as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        print(f"Error loading alerts: {e}")
+        return []
+
+def save_alerts(alerts):
+    """Save alerts to JSON file."""
+    try:
+        with open(ALERTS_FILE, 'w') as f:
+            json.dump(alerts, f, indent=2)
+    except Exception as e:
+        print(f"Error saving alerts: {e}")
+
+def process_alert(alert):
+    """Process an alert using the logic from main.py"""
+    try:
+        symbol = alert['symbol']
+        company_name = alert.get('companyName', symbol)
+        threshold = alert.get('threshold', 5.0)
+        
+        # Get current stock data
+        stock_data = get_stock_data(symbol)
+        if "error" in stock_data or "mock" in stock_data:
+            return {"status": "error", "message": "Failed to fetch stock data"}
+        
+        metrics = get_stock_metrics(stock_data)
+        price_change = abs(metrics["change_percent"])
+        
+        if price_change >= threshold:
+            # Alert triggered - update status
+            alert['status'] = 'triggered'
+            alert['lastTriggered'] = datetime.now().isoformat()
+            alert['triggeredPrice'] = metrics["current_price"]
+            alert['triggeredChange'] = metrics["change_percent"]
+            
+            # Here you would integrate with your main.py email functionality
+            # For now, we'll just log it
+            print(f"🚨 ALERT TRIGGERED: {symbol} changed by {metrics['change_percent']:.2f}%")
+            
+            return {"status": "triggered", "message": f"Alert triggered: {symbol} changed by {metrics['change_percent']:.2f}%"}
+        else:
+            return {"status": "monitoring", "message": f"Monitoring {symbol}: {metrics['change_percent']:.2f}% change"}
+            
+    except Exception as e:
+        print(f"Error processing alert: {e}")
+        return {"status": "error", "message": str(e)}
 
 def generate_mock_stock_data(symbol):
     """Generate realistic mock stock data for development"""
@@ -354,46 +412,58 @@ def get_portfolio_data():
 def get_alerts_data():
     """Get alerts overview data."""
     try:
-        # Simulate alert data
-        active_alerts = random.randint(8, 15)
-        triggered_today = random.randint(1, 5)
+        alerts = load_alerts()
+        
+        # Count active alerts
+        active_alerts = len([alert for alert in alerts if alert['status'] == 'active'])
+        
+        # Count alerts triggered today
+        today = datetime.now().date()
+        triggered_today = len([
+            alert for alert in alerts 
+            if alert.get('lastTriggered') and 
+            datetime.fromisoformat(alert['lastTriggered']).date() == today
+        ])
+        
+        # Get recent alerts (last 5 triggered alerts)
+        recent_alerts = []
+        triggered_alerts = [alert for alert in alerts if alert.get('lastTriggered')]
+        triggered_alerts.sort(key=lambda x: x['lastTriggered'], reverse=True)
+        
+        for alert in triggered_alerts[:5]:
+            # Calculate time ago
+            triggered_time = datetime.fromisoformat(alert['lastTriggered'])
+            time_diff = datetime.now() - triggered_time
+            
+            if time_diff.days > 0:
+                time_ago = f"{time_diff.days} day{'s' if time_diff.days > 1 else ''} ago"
+            elif time_diff.seconds > 3600:
+                hours = time_diff.seconds // 3600
+                time_ago = f"{hours} hour{'s' if hours > 1 else ''} ago"
+            else:
+                minutes = time_diff.seconds // 60
+                time_ago = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+            
+            recent_alerts.append({
+                "id": alert['id'],
+                "type": "success",
+                "title": f"{alert['symbol']} alert triggered",
+                "time": time_ago,
+                "symbol": alert['symbol'],
+                "price": alert.get('triggeredPrice', 0)
+            })
         
         return jsonify({
             "activeAlerts": active_alerts,
             "triggeredToday": triggered_today,
-            "recentAlerts": [
-                {
-                    "id": "1",
-                    "type": "success",
-                    "title": "AAPL price alert triggered",
-                    "time": "2 minutes ago",
-                    "symbol": "AAPL",
-                    "price": 185.50
-                },
-                {
-                    "id": "2", 
-                    "type": "info",
-                    "title": "News alert: Tesla earnings report",
-                    "time": "15 minutes ago",
-                    "symbol": "TSLA",
-                    "price": 245.20
-                },
-                {
-                    "id": "3",
-                    "type": "warning", 
-                    "title": "Portfolio rebalancing suggestion",
-                    "time": "1 hour ago",
-                    "symbol": "NVDA",
-                    "price": 485.75
-                }
-            ]
+            "recentAlerts": recent_alerts
         })
         
     except Exception as e:
         print(f"❌ Error getting alerts data: {e}")
         return jsonify({
-            "activeAlerts": 12,
-            "triggeredToday": 3,
+            "activeAlerts": 0,
+            "triggeredToday": 0,
             "recentAlerts": []
         })
 
@@ -495,6 +565,130 @@ def get_recent_activities():
     except Exception as e:
         print(f"❌ Error getting activities: {e}")
         return jsonify([])
+
+# Alert Management Endpoints
+@app.route('/api/alerts', methods=['GET'])
+def get_alerts():
+    """Get all alerts."""
+    try:
+        alerts = load_alerts()
+        return jsonify(alerts)
+    except Exception as e:
+        print(f"❌ Error getting alerts: {e}")
+        return jsonify({"error": "Failed to load alerts"}), 500
+
+@app.route('/api/alerts', methods=['POST'])
+def create_alert():
+    """Create a new alert."""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('symbol') or not data.get('alertType'):
+            return jsonify({"error": "Missing required fields: symbol, alertType"}), 400
+        
+        # Create new alert
+        new_alert = {
+            "id": str(uuid.uuid4()),
+            "symbol": data['symbol'],
+            "companyName": data.get('companyName', data['symbol']),
+            "alertType": data['alertType'],
+            "threshold": data.get('threshold', 5.0),
+            "percentage": data.get('percentage'),
+            "status": "active",
+            "createdAt": datetime.now().isoformat(),
+            "emailNotifications": data.get('emailNotifications', True),
+            "inAppNotifications": data.get('inAppNotifications', True),
+            "lastTriggered": None,
+            "triggeredPrice": None,
+            "triggeredChange": None
+        }
+        
+        # Load existing alerts and add new one
+        alerts = load_alerts()
+        alerts.append(new_alert)
+        save_alerts(alerts)
+        
+        print(f"✅ Created alert for {new_alert['symbol']}")
+        return jsonify(new_alert), 201
+        
+    except Exception as e:
+        print(f"❌ Error creating alert: {e}")
+        return jsonify({"error": "Failed to create alert"}), 500
+
+@app.route('/api/alerts/<alert_id>', methods=['PUT'])
+def update_alert(alert_id):
+    """Update an existing alert."""
+    try:
+        data = request.get_json()
+        alerts = load_alerts()
+        
+        # Find and update alert
+        for alert in alerts:
+            if alert['id'] == alert_id:
+                # Update allowed fields
+                allowed_fields = ['threshold', 'percentage', 'status', 'emailNotifications', 'inAppNotifications']
+                for field in allowed_fields:
+                    if field in data:
+                        alert[field] = data[field]
+                
+                save_alerts(alerts)
+                print(f"✅ Updated alert {alert_id}")
+                return jsonify(alert)
+        
+        return jsonify({"error": "Alert not found"}), 404
+        
+    except Exception as e:
+        print(f"❌ Error updating alert: {e}")
+        return jsonify({"error": "Failed to update alert"}), 500
+
+@app.route('/api/alerts/<alert_id>', methods=['DELETE'])
+def delete_alert(alert_id):
+    """Delete an alert."""
+    try:
+        alerts = load_alerts()
+        
+        # Find and remove alert
+        for i, alert in enumerate(alerts):
+            if alert['id'] == alert_id:
+                deleted_alert = alerts.pop(i)
+                save_alerts(alerts)
+                print(f"✅ Deleted alert {alert_id}")
+                return jsonify({"message": "Alert deleted successfully"})
+        
+        return jsonify({"error": "Alert not found"}), 404
+        
+    except Exception as e:
+        print(f"❌ Error deleting alert: {e}")
+        return jsonify({"error": "Failed to delete alert"}), 500
+
+@app.route('/api/alerts/process', methods=['POST'])
+def process_alerts():
+    """Process all active alerts."""
+    try:
+        alerts = load_alerts()
+        active_alerts = [alert for alert in alerts if alert['status'] == 'active']
+        
+        results = []
+        for alert in active_alerts:
+            result = process_alert(alert)
+            results.append({
+                "alertId": alert['id'],
+                "symbol": alert['symbol'],
+                "result": result
+            })
+        
+        # Save updated alerts
+        save_alerts(alerts)
+        
+        return jsonify({
+            "message": f"Processed {len(active_alerts)} alerts",
+            "results": results
+        })
+        
+    except Exception as e:
+        print(f"❌ Error processing alerts: {e}")
+        return jsonify({"error": "Failed to process alerts"}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
