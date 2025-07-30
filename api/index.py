@@ -161,6 +161,19 @@ def get_company_name(symbol, profile_data):
         return profile_data["name"]
     return f"{symbol} Corp."
 
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint for testing."""
+    return jsonify({
+        "message": "Foresight API is running!",
+        "endpoints": [
+            "/api/health",
+            "/api/stocks",
+            "/api/dashboard/portfolio",
+            "/api/dashboard/alerts"
+        ]
+    })
+
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     """Get stock data for multiple symbols."""
