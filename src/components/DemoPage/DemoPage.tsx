@@ -85,7 +85,7 @@ export default function DemoPage({
         <div className={styles.content}>
           <div className={styles.header}>
             <h1 className={styles.title}>Dashboard</h1>
-            <p className={styles.subtitle}>Welcome back! Here's your portfolio overview.</p>
+            <p className={styles.subtitle}>Welcome back! Here&apos;s your portfolio overview.</p>
           </div>
 
           {loading && (
