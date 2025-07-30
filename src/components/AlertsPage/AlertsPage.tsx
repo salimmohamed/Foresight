@@ -120,6 +120,28 @@ export default function AlertsPage({
     }
   }
 
+  // Calculate most active stock
+  const getMostActiveStock = () => {
+    const activeAlerts = alerts.filter(alert => alert.status === 'active')
+    
+    if (activeAlerts.length === 0) {
+      return { symbol: 'N/A', count: 0 }
+    }
+
+    const stockCounts = activeAlerts.reduce((acc, alert) => {
+      acc[alert.symbol] = (acc[alert.symbol] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const mostActive = Object.entries(stockCounts).reduce((max, [symbol, count]) => {
+      return count > max.count ? { symbol, count } : max
+    }, { symbol: '', count: 0 })
+
+    return mostActive
+  }
+
+  const mostActiveStock = getMostActiveStock()
+
   const activeAlerts = alerts.filter((alert) => alert.status === "active").length
   const triggeredThisWeek = alerts.filter(
     (alert) => alert.lastTriggered && new Date(alert.lastTriggered) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -209,12 +231,11 @@ export default function AlertsPage({
 
           <Card>
             <CardHeader className={styles["stats-card-header"]}>
-              <CardTitle className={styles["stats-card-title"]}>Success Rate</CardTitle>
+              <CardTitle className={styles["stats-card-title"]}>Most Active Stock</CardTitle>
               <TrendingUp className={styles["stats-card-icon"]} />
             </CardHeader>
             <CardContent>
-              <div className={styles["stats-card-value"]}>94%</div>
-              <p className={styles["stats-card-description"]}>Alert accuracy</p>
+              <div className={styles["stats-card-value"]}>{mostActiveStock.symbol}</div>
             </CardContent>
           </Card>
         </div>
