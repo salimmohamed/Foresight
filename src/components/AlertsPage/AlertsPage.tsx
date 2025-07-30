@@ -228,7 +228,33 @@ export default function AlertsPage({
         />
 
         {/* Recent Activity */}
-        <Card className={styles["recent-activity-card"]}>
+        <Card className={styles["recent-activity-card"]} style={{ position: 'relative' }}>
+          {/* Coming Soon Overlay */}
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Coming Soon</h3>
+              <p className="text-gray-600 text-sm">Real-time alert activity tracking</p>
+            </div>
+          </div>
+          
           <CardHeader>
             <CardTitle>Recent Alert Activity</CardTitle>
             <CardDescription>Latest triggered alerts and system notifications</CardDescription>
