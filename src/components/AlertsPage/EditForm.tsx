@@ -1,76 +1,89 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
 import { X } from "lucide-react"
-import { CreateAlertData } from "@/services/alertService"
+import { Alert, UpdateAlertData } from "@/services/alertService"
 
-interface AlertFormProps {
+interface EditFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (alert: CreateAlertData) => void
+  onSubmit: (alertId: string, alert: UpdateAlertData) => void
+  alert: Alert | null
 }
 
-export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
+export function EditForm({ isOpen, onClose, onSubmit, alert }: EditFormProps) {
   const [formData, setFormData] = useState({
-    symbol: "",
-    company: "",
-    alertType: "",
     threshold: "",
     percentage: "",
+    status: "active" as "active" | "paused" | "triggered" | "expired",
     emailNotifications: true,
     inAppNotifications: true,
-    notes: "",
   })
+
+  // Initialize form data when alert changes
+  useEffect(() => {
+    if (alert) {
+      setFormData({
+        threshold: alert.threshold?.toString() || "",
+        percentage: alert.percentage?.toString() || "",
+        status: alert.status,
+        emailNotifications: alert.emailNotifications,
+        inAppNotifications: alert.inAppNotifications,
+      })
+    }
+  }, [alert])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    const alertData: CreateAlertData = {
-      symbol: formData.symbol,
-      companyName: formData.company || undefined,
-      alertType: formData.alertType,
+    if (!alert) return
+    
+    const updateData: UpdateAlertData = {
+      status: formData.status,
       emailNotifications: formData.emailNotifications,
       inAppNotifications: formData.inAppNotifications,
     }
     
     // Add threshold or percentage based on alert type
-    if (formData.alertType === "price-above" || formData.alertType === "price-below") {
-      alertData.threshold = parseFloat(formData.threshold)
-    } else if (formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss") {
-      alertData.percentage = parseFloat(formData.percentage)
+    if (alert.alertType === "price-above" || alert.alertType === "price-below") {
+      updateData.threshold = parseFloat(formData.threshold)
+    } else if (alert.alertType === "percentage-gain" || alert.alertType === "percentage-loss" || alert.alertType === "percentage-change") {
+      updateData.percentage = parseFloat(formData.percentage)
     }
     
-    onSubmit(alertData)
-    setFormData({
-      symbol: "",
-      company: "",
-      alertType: "",
-      threshold: "",
-      percentage: "",
-      emailNotifications: true,
-      inAppNotifications: true,
-      notes: "",
-    })
+    onSubmit(alert.id, updateData)
     onClose()
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !alert) return null
+
+  const getAlertTypeLabel = (type: string) => {
+    switch (type) {
+      case "price-above": return "Price Above Threshold"
+      case "price-below": return "Price Below Threshold"
+      case "percentage-gain": return "Percentage Gain"
+      case "percentage-loss": return "Percentage Loss"
+      case "percentage-change": return "Percentage Change (Up or Down)"
+      case "volume-spike": return "Volume Spike"
+      case "news-sentiment": return "News Sentiment Change"
+      default: return type
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Create New Alert</CardTitle>
-            <CardDescription>Set up a new stock monitoring alert with custom parameters</CardDescription>
+            <CardTitle>Edit Alert</CardTitle>
+            <CardDescription>Modify alert settings for {alert.symbol} ({alert.companyName})</CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -78,51 +91,38 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Read-only alert info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="symbol">Stock Symbol</Label>
+                <Label>Stock Symbol</Label>
                 <Input
-                  id="symbol"
-                  placeholder="e.g., AAPL"
-                  value={formData.symbol}
-                  onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
-                  required
+                  value={alert.symbol}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company">Company Name</Label>
+                <Label>Company Name</Label>
                 <Input
-                  id="company"
-                  placeholder="e.g., Apple Inc."
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  value={alert.companyName}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="alertType">Alert Type</Label>
-              <Select
-                value={formData.alertType}
-                onValueChange={(value) => setFormData({ ...formData, alertType: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select alert type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="price-above">Price Above Threshold</SelectItem>
-                  <SelectItem value="price-below">Price Below Threshold</SelectItem>
-                  <SelectItem value="percentage-gain">Percentage Gain</SelectItem>
-                  <SelectItem value="percentage-loss">Percentage Loss</SelectItem>
-                  <SelectItem value="percentage-change">Percentage Change (Up or Down)</SelectItem>
-                  <SelectItem value="volume-spike">Volume Spike</SelectItem>
-                  <SelectItem value="news-sentiment">News Sentiment Change</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Alert Type</Label>
+              <Input
+                value={getAlertTypeLabel(alert.alertType)}
+                disabled
+                className="bg-muted"
+              />
             </div>
 
+            {/* Editable fields */}
             <div className="grid grid-cols-2 gap-4">
-              {(formData.alertType === "price-above" || formData.alertType === "price-below") && (
+              {(alert.alertType === "price-above" || alert.alertType === "price-below") && (
                 <div className="space-y-2">
                   <Label htmlFor="threshold">Price Threshold ($)</Label>
                   <Input
@@ -136,7 +136,7 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
                   />
                 </div>
               )}
-              {(formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss" || formData.alertType === "percentage-change") && (
+              {(alert.alertType === "percentage-gain" || alert.alertType === "percentage-loss" || alert.alertType === "percentage-change") && (
                 <div className="space-y-2">
                   <Label htmlFor="percentage">Percentage Change (%)</Label>
                   <Input
@@ -150,6 +150,26 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Alert Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value: "active" | "paused" | "triggered" | "expired") => 
+                  setFormData({ ...formData, status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="triggered">Triggered</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-4">
@@ -178,21 +198,11 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add any additional notes about this alert..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              />
-            </div>
-
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit">Create Alert</Button>
+              <Button type="submit">Update Alert</Button>
             </div>
           </form>
         </CardContent>

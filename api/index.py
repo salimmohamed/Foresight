@@ -44,7 +44,7 @@ def process_alert(alert):
     try:
         symbol = alert['symbol']
         company_name = alert.get('companyName', symbol)
-        threshold = alert.get('threshold', 5.0)
+        alert_type = alert['alertType']
         
         # Get current stock data
         stock_data = get_stock_data(symbol)
@@ -52,22 +52,51 @@ def process_alert(alert):
             return {"status": "error", "message": "Failed to fetch stock data"}
         
         metrics = get_stock_metrics(stock_data)
-        price_change = abs(metrics["change_percent"])
+        current_price = metrics["current_price"]
+        price_change = metrics["change_percent"]
         
-        if price_change >= threshold:
+        # Check if alert should be triggered based on type
+        triggered = False
+        trigger_message = ""
+        
+        if alert_type in ["price-above", "price-below"]:
+            threshold = alert.get('threshold')
+            if threshold is not None:
+                if alert_type == "price-above" and current_price >= threshold:
+                    triggered = True
+                    trigger_message = f"Price above ${threshold}"
+                elif alert_type == "price-below" and current_price <= threshold:
+                    triggered = True
+                    trigger_message = f"Price below ${threshold}"
+        
+        elif alert_type in ["percentage-gain", "percentage-loss", "percentage-change"]:
+            percentage = alert.get('percentage')
+            if percentage is not None:
+                if alert_type == "percentage-gain" and price_change >= percentage:
+                    triggered = True
+                    trigger_message = f"Gained {price_change:.2f}% (threshold: {percentage}%)"
+                elif alert_type == "percentage-loss" and price_change <= -percentage:
+                    triggered = True
+                    trigger_message = f"Lost {abs(price_change):.2f}% (threshold: {percentage}%)"
+                elif alert_type == "percentage-change" and abs(price_change) >= percentage:
+                    triggered = True
+                    direction = "gained" if price_change > 0 else "lost"
+                    trigger_message = f"{direction.capitalize()} {abs(price_change):.2f}% (threshold: {percentage}%)"
+        
+        if triggered:
             # Alert triggered - update status
             alert['status'] = 'triggered'
             alert['lastTriggered'] = datetime.now().isoformat()
-            alert['triggeredPrice'] = metrics["current_price"]
-            alert['triggeredChange'] = metrics["change_percent"]
+            alert['triggeredPrice'] = current_price
+            alert['triggeredChange'] = price_change
             
             # Here you would integrate with your main.py email functionality
             # For now, we'll just log it
-            print(f"🚨 ALERT TRIGGERED: {symbol} changed by {metrics['change_percent']:.2f}%")
+            print(f"🚨 ALERT TRIGGERED: {symbol} - {trigger_message}")
             
-            return {"status": "triggered", "message": f"Alert triggered: {symbol} changed by {metrics['change_percent']:.2f}%"}
+            return {"status": "triggered", "message": f"Alert triggered: {symbol} - {trigger_message}"}
         else:
-            return {"status": "monitoring", "message": f"Monitoring {symbol}: {metrics['change_percent']:.2f}% change"}
+            return {"status": "monitoring", "message": f"Monitoring {symbol}: {price_change:.2f}% change"}
             
     except Exception as e:
         print(f"Error processing alert: {e}")
@@ -593,7 +622,7 @@ def create_alert():
             "symbol": data['symbol'],
             "companyName": data.get('companyName', data['symbol']),
             "alertType": data['alertType'],
-            "threshold": data.get('threshold', 5.0),
+            "threshold": data.get('threshold'),
             "percentage": data.get('percentage'),
             "status": "active",
             "createdAt": datetime.now().isoformat(),

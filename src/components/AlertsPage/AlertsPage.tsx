@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { AlertForm } from "./AlertForm"
+import { EditForm } from "./EditForm"
 import { AlertsTable } from "./AlertsTable"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bell, BellRing, Plus, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react"
 import styles from "./AlertsPage.module.css"
-import { fetchAlerts, createAlert, updateAlert, deleteAlert, processAlerts, type Alert } from "@/services/alertService"
+import { fetchAlerts, createAlert, updateAlert, deleteAlert, processAlerts, type Alert, type UpdateAlertData } from "@/services/alertService"
 
 export interface AlertsPageProps {
   onThemeToggle?: () => void
@@ -24,6 +25,8 @@ export default function AlertsPage({
 }: AlertsPageProps) {
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false)
+  const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processingAlerts, setProcessingAlerts] = useState(false)
@@ -74,8 +77,23 @@ export default function AlertsPage({
   }
 
   const handleEditAlert = (id: string) => {
-    // In a real app, this would open the edit form with pre-filled data
-    console.log("Edit alert:", id)
+    const alert = alerts.find(a => a.id === id)
+    if (alert) {
+      setEditingAlert(alert)
+      setIsEditFormOpen(true)
+    }
+  }
+
+  const handleUpdateAlert = async (alertId: string, updateData: UpdateAlertData) => {
+    try {
+      const updatedAlert = await updateAlert(alertId, updateData)
+      setAlerts(alerts.map(a => a.id === alertId ? updatedAlert : a))
+      setIsEditFormOpen(false)
+      setEditingAlert(null)
+    } catch (err) {
+      console.error('Error updating alert:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update alert')
+    }
   }
 
   const handleDeleteAlert = async (id: string) => {
@@ -245,6 +263,17 @@ export default function AlertsPage({
 
       {/* Alert Form Modal */}
       <AlertForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onSubmit={handleCreateAlert} />
+      
+      {/* Edit Form Modal */}
+      <EditForm 
+        isOpen={isEditFormOpen} 
+        onClose={() => {
+          setIsEditFormOpen(false)
+          setEditingAlert(null)
+        }} 
+        onSubmit={handleUpdateAlert}
+        alert={editingAlert}
+      />
     </div>
   )
 } 
