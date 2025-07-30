@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Volume2,
   Newspaper,
+  ArrowUpDown,
 } from "lucide-react"
 import { Alert } from "@/services/alertService"
 
@@ -40,8 +41,11 @@ export function AlertsTable({ alerts, onToggleAlert, onEditAlert, onDeleteAlert 
       case "price-below":
         return <TrendingUp className="h-4 w-4" />
       case "percentage-gain":
+        return <TrendingUp className="h-4 w-4" />
       case "percentage-loss":
         return <TrendingDown className="h-4 w-4" />
+      case "percentage-change":
+        return <ArrowUpDown className="h-4 w-4" />
       case "volume-spike":
         return <Volume2 className="h-4 w-4" />
       case "news-sentiment":
@@ -61,6 +65,8 @@ export function AlertsTable({ alerts, onToggleAlert, onEditAlert, onDeleteAlert 
         return "% Gain"
       case "percentage-loss":
         return "% Loss"
+      case "percentage-change":
+        return "% Change"
       case "volume-spike":
         return "Volume Spike"
       case "news-sentiment":
@@ -131,10 +137,11 @@ export function AlertsTable({ alerts, onToggleAlert, onEditAlert, onDeleteAlert 
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="price-above">Price Above</SelectItem>
               <SelectItem value="price-below">Price Below</SelectItem>
-              <SelectItem value="percentage-gain">Percentage Gain</SelectItem>
-              <SelectItem value="percentage-loss">Percentage Loss</SelectItem>
-              <SelectItem value="volume-spike">Volume Spike</SelectItem>
-              <SelectItem value="news-sentiment">News Sentiment</SelectItem>
+                             <SelectItem value="percentage-gain">Percentage Gain</SelectItem>
+               <SelectItem value="percentage-loss">Percentage Loss</SelectItem>
+               <SelectItem value="percentage-change">Percentage Change</SelectItem>
+               <SelectItem value="volume-spike">Volume Spike</SelectItem>
+               <SelectItem value="news-sentiment">News Sentiment</SelectItem>
             </SelectContent>
           </Select>
         </div>
