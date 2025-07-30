@@ -88,7 +88,7 @@ export function AlertsTable({ alerts, onToggleAlert, onEditAlert, onDeleteAlert 
   const filteredAlerts = alerts.filter((alert) => {
     const matchesSearch =
       alert.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.company.toLowerCase().includes(searchTerm.toLowerCase())
+      alert.companyName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || alert.status === statusFilter
     const matchesType = typeFilter === "all" || alert.alertType === typeFilter
     return matchesSearch && matchesStatus && matchesType
@@ -159,7 +159,7 @@ export function AlertsTable({ alerts, onToggleAlert, onEditAlert, onDeleteAlert 
                   <TableCell>
                     <div>
                       <div className="font-medium">{alert.symbol}</div>
-                      <div className="text-sm text-muted-foreground">{alert.company}</div>
+                      <div className="text-sm text-muted-foreground">{alert.companyName}</div>
                     </div>
                   </TableCell>
                   <TableCell>
