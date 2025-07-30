@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bell, Github, Menu, Moon, Sun, TrendingUp, User, X, Settings, BarChart3, Home } from "lucide-react"
+import { Bell, Github, Menu, Moon, Sun, TrendingUp, User, X, Settings, BarChart3, Home, LogIn, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import styles from './NavigationHeader.module.css'
 
 interface NavigationHeaderProps {
@@ -151,38 +152,68 @@ export function NavigationHeader({
                   <Avatar className={styles.avatar}>
                     <AvatarImage src={userAvatar || "/placeholder.svg"} alt={userName} />
                     <AvatarFallback className={styles.avatarFallback}>
-                      {displayName
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()}
+                      {user ? (
+                        displayName
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      ) : (
+                        "?"
+                      )}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className={styles.dropdownContent} align="end" forceMount>
-                <DropdownMenuLabel className={styles.dropdownLabel}>
-                  <div className={styles.userInfo}>
-                    <p className={styles.userName}>{displayName}</p>
-                    <p className={styles.userEmail}>{displayEmail}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onProfileClick}>
-                  <User className={styles.dropdownIcon} />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onSettingsClick}>
-                  <Settings className={styles.dropdownIcon} />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  signOut()
-                  router.push('/auth')
-                }}>
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                {user ? (
+                  <>
+                    <DropdownMenuLabel className={styles.dropdownLabel}>
+                      <div className={styles.userInfo}>
+                        <p className={styles.userName}>{displayName}</p>
+                        <p className={styles.userEmail}>{displayEmail}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onProfileClick}>
+                      <User className={styles.dropdownIcon} />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onSettingsClick}>
+                      <Settings className={styles.dropdownIcon} />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      signOut()
+                      router.push('/auth')
+                    }}>
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuLabel className={styles.dropdownLabel}>
+                      <div className={styles.userInfo}>
+                        <p className={styles.userName}>Not signed in</p>
+                        <p className={styles.userEmail}>Sign in to access your account</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth">
+                        <LogIn className={styles.dropdownIcon} />
+                        <span>Sign in</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth">
+                        <UserPlus className={styles.dropdownIcon} />
+                        <span>Create account</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

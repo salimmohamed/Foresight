@@ -17,8 +17,6 @@ import {
 import styles from './DemoPage.module.css'
 
 interface DemoPageProps {
-  userName?: string
-  userEmail?: string
   userAvatar?: string
   notificationCount?: number
   onThemeToggle?: () => void
@@ -28,8 +26,6 @@ interface DemoPageProps {
 }
 
 export default function DemoPage({
-  userName = "Sarah Johnson",
-  userEmail = "sarah.johnson@example.com",
   userAvatar,
   notificationCount = 5,
   onThemeToggle,
@@ -76,8 +72,6 @@ export default function DemoPage({
     <div className={styles.container}>
       <NavigationHeader
         currentPath="/dashboard"
-        userName={userName}
-        userEmail={userEmail}
         userAvatar={userAvatar}
         notificationCount={notificationCount}
         onThemeToggle={onThemeToggle}

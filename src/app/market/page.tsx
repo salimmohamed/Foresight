@@ -26,8 +26,6 @@ export default function MarketPage() {
     <div>
       <NavigationHeader
         currentPath="/market"
-        userName="Sarah Johnson"
-        userEmail="sarah.johnson@example.com"
         notificationCount={5}
         onThemeToggle={handleThemeToggle}
         onLogout={handleLogout}

@@ -46,7 +46,7 @@ export default function HomePage({
           </div>
 
           <div className={styles.heroButtons}>
-            <Button size="lg" className={styles.primaryButton} onClick={onExploreDashboardClick}>
+            <Button size="lg" className={`${styles.primaryButton} bg-blue-600 hover:bg-blue-700`} onClick={onExploreDashboardClick}>
               <TrendingUp className={styles.buttonIcon} />
               Explore Dashboard
             </Button>
@@ -195,7 +195,7 @@ export default function HomePage({
             </CardDescription>
           </CardHeader>
           <CardContent className={styles.ctaButtons}>
-            <Button size="lg" className={styles.ctaPrimaryButton} onClick={onViewRepositoryClick}>
+            <Button size="lg" className={`${styles.ctaPrimaryButton} bg-blue-600 hover:bg-blue-700`} onClick={onViewRepositoryClick}>
               <Github className={styles.buttonIcon} />
               Explore Repository
             </Button>
