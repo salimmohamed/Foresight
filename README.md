@@ -1,86 +1,123 @@
-# Foresight: From Daily Challenge to AI-Driven Trading Insights
+# Foresight: Trading Insights
 
 This project began as a humble exercise on Day 36 of the "100 Days of Code: The Complete Python Pro Bootcamp" course. What started as a simple stock monitoring script quickly evolved into a captivating exploration of financial data, real-time alerts, and the immense potential of artificial intelligence in trading. My fascination with leveraging technology to gain an edge in financial markets has driven me to expand this foundational CLI application.
 
 This repository represents the initial phase of building a sophisticated trading assistant. My vision extends beyond basic alerts; I aim to integrate advanced Large Language Models (LLMs) and other AI techniques to analyze market sentiment, predict trends, and ultimately, provide intelligent, actionable insights for trading decisions. The long-term goal is to develop a system capable of not just informing, but potentially automating, trading strategies based on robust AI analysis.
 
+## Learning Journey & Technical Growth
+
+### From CLI to Full-Stack Web Application
+This project demonstrates my progression from basic Python scripting to full-stack web development:
+
+- **Phase 1**: Started with command-line Python scripts using `argparse`, `requests`, and `smtplib`
+- **Phase 2**: Evolved into a Flask REST API with comprehensive endpoints and data management
+- **Phase 3**: Built a modern Next.js frontend with TypeScript, Tailwind CSS, and component libraries
+- **Phase 4**: Integrated real-time data processing, authentication, and advanced UI/UX patterns
+
+### Key Learning Outcomes
+- **API Integration**: Mastered external API consumption (Alpha Vantage, NewsAPI) with error handling and rate limiting
+- **Full-Stack Development**: Gained proficiency in both frontend (React/Next.js) and backend (Python/Flask) technologies
+- **Real-time Systems**: Implemented live data updates, WebSocket connections, and event-driven architectures
+- **Database Design**: Designed efficient data models for financial data, user preferences, and alert management
+- **Security Best Practices**: Implemented authentication, input validation, and secure API key management
+- **DevOps & Deployment**: Deployed both frontend and backend to cloud platforms with CI/CD pipelines
+
 ## Project Overview
 
-This project is a Python-based command-line interface (CLI) application that monitors stock prices, fetches relevant news, and sends email alerts based on price fluctuations. It is part of the Foresight suite.
+Foresight has evolved from a CLI application into a full-stack web application featuring:
 
-## Features & Technical Implementation
+- **Frontend**: Modern Next.js application with TypeScript, Tailwind CSS, and shadcn/ui components
+- **Backend**: Flask API with comprehensive endpoints for stock data, alerts, and dashboard functionality
+- **Real-time Monitoring**: Advanced alert system with email notifications and in-app alerts
+- **Dashboard**: Interactive dashboard with portfolio tracking, market leaders, and activity monitoring
 
-- **Stock Price Monitoring (Alpha Vantage API):** The application fetches daily closing prices for specified stock symbols using the Alpha Vantage API. This robust financial data API provides historical and real-time stock information, crucial for accurate price change calculations.
+## Technical Implementation
 
-- **Price Change Calculation:** It computes the percentage change in the stock's closing price between the two most recent trading days. This core logic identifies significant market movements that warrant an alert.
+### Frontend (Next.js)
+- **Modern UI/UX**: Clean, responsive design with dark/light mode support
+- **Dashboard**: Real-time portfolio overview with market data and alerts
+- **Alert Management**: Create, edit, and manage stock price alerts
+- **Stock Monitoring**: Real-time stock data with price tracking
+- **Authentication**: Protected routes and user session management
 
-- **News Integration (NewsAPI):** When a significant price change is detected, the application queries the NewsAPI to retrieve relevant news articles for the associated company. This provides context to the price movement, helping users understand the underlying reasons.
+### Backend (Flask API)
+- **Stock Data**: Real-time stock information via Alpha Vantage API
+- **Alert System**: Comprehensive alert creation, management, and processing
+- **Dashboard Data**: Portfolio tracking, market leaders, and activity feeds
+- **Email Notifications**: Automated email alerts for triggered conditions
+- **Health Monitoring**: API health checks and status endpoints
 
-- **Email Alerts (SMTP & `smtplib`):** Instead of traditional SMS, alerts are dispatched via email using Python's built-in `smtplib` library. This allows for rich, detailed notifications directly to the user's inbox, leveraging standard email protocols (SMTP) for reliable delivery. For security, App Passwords are recommended for services like Gmail.
+### Core Functionality
+- **Price Monitoring**: Track stock prices and calculate percentage changes
+- **Alert Triggers**: Price-based and percentage-based alert conditions
+- **News Integration**: Relevant news articles for context
+- **Email Alerts**: Rich email notifications with stock data and news
+- **Real-time Updates**: Live data updates and status monitoring
 
-- **Command-Line Interface (`argparse`):** The application is designed as a CLI tool, making it easy to run and configure from the terminal. The `argparse` module is used to handle command-line arguments such as stock symbol, company name, price change threshold, and the number of news articles.
+## API Endpoints
 
-- **Environment Variable Management (`python-dotenv`):** API keys and sensitive credentials (like email passwords) are securely loaded from a `.env` file using `python-dotenv`. This practice ensures that sensitive information is not hardcoded into the application and is kept out of version control, enhancing security and maintainability.
+### Core Endpoints
+- `GET /api/health` - Health check
+- `GET /api/stocks` - Stock data for multiple symbols
+- `GET /api/stock/{symbol}` - Individual stock data
 
-- **Console Logging:** For movements that do not meet the alert threshold, the application provides clear console output, keeping the user informed without unnecessary notifications.
+### Dashboard Endpoints
+- `GET /api/dashboard/portfolio` - Portfolio overview data
+- `GET /api/dashboard/alerts` - Alert summary and statistics
+- `GET /api/dashboard/market-leaders` - Top gainers and losers
+- `GET /api/dashboard/activities` - Recent user activities
+
+### Alert Management
+- `GET /api/alerts` - List all alerts
+- `POST /api/alerts` - Create new alert
+- `PUT /api/alerts/{id}` - Update existing alert
+- `DELETE /api/alerts/{id}` - Delete alert
+- `POST /api/alerts/process` - Process all active alerts
+
+## Skills Demonstrated
+
+### Programming Languages & Frameworks
+- **Python**: Flask, requests, smtplib, argparse, python-dotenv
+- **JavaScript/TypeScript**: Next.js, React, Tailwind CSS
+- **HTML/CSS**: Responsive design, modern UI components
+
+### APIs & External Services
+- **Financial APIs**: Alpha Vantage for real-time stock data
+- **News APIs**: NewsAPI for market context and sentiment
+- **Email Services**: SMTP integration for automated notifications
+
+### Development Practices
+- **Version Control**: Git workflow and collaborative development
+- **Code Organization**: Modular architecture and clean code principles
+- **Error Handling**: Comprehensive exception handling and user feedback
+- **Documentation**: API documentation and code comments
+
+### Problem Solving
+- **Data Processing**: Real-time financial data analysis and calculations
+- **System Design**: Scalable architecture for handling multiple data sources
+- **User Experience**: Intuitive interfaces for complex financial data
+- **Performance Optimization**: Efficient API calls and data caching
 
 ## Future Plans
 
-This project is the foundation for a more advanced trading assistant. Future development will focus on:
+This project continues to evolve with plans for:
 
-- **AI-Powered Trading Insights:** Integrating advanced Large Language Models (LLMs) and other AI techniques to analyze market sentiment, predict trends, and provide intelligent, actionable trading recommendations. This will involve natural language processing of news, social media, and financial reports.
-- **Automated Trading:** Building a secure and reliable system to automate trades based on the AI's insights and user-defined strategies. This phase will require careful consideration of risk management, execution platforms, and regulatory compliance.
+- **AI-Powered Trading Insights**: Integration of Large Language Models (LLMs) for market sentiment analysis
+- **Advanced Analytics**: Machine learning models for trend prediction and pattern recognition
+- **Automated Trading**: Secure execution of trades based on AI insights
 
-## Getting Started
+## Educational Value
 
-### Prerequisites
+This project serves as a comprehensive learning experience in:
+- **Financial Technology**: Understanding market data, trading concepts, and algorithmic approaches
+- **Software Engineering**: Full-stack development, API design, and system architecture
+- **Data Science**: Real-time data processing, analysis, and visualization
+- **Product Development**: User-centered design and iterative feature development
 
-- Python 3.x
-- `pip` (Python package installer)
+## Contributing
 
-### Installation
+This is a personal project that evolved from a learning exercise. While contributions are welcome, the primary focus is on learning and experimentation with AI-driven trading technologies.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/foresight.git
-   ```
-2. **Navigate to the project directory:**
-   ```bash
-   cd stock-news-alert
-   ```
-3. **Install the dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Set up your environment variables:**
-   - Create a `.env` file in the root directory of the project.
-   - Add your API keys and email credentials to the `.env` file. Replace the placeholder values with your actual keys and credentials:
-     ```
-     ALPHA_VANTAGE_API_KEY=YOUR_API_KEY
-     NEWS_API_KEY=YOUR_API_KEY
-     EMAIL_ADDRESS=YOUR_EMAIL_ADDRESS
-     EMAIL_PASSWORD=YOUR_EMAIL_PASSWORD
-     RECIPIENT_EMAIL=RECIPIENT_EMAIL_ADDRESS
-     ```
-   **Note for Gmail users:** If you are using Gmail, you **must** generate an "App Password" for `EMAIL_PASSWORD` as regular passwords often do not work for programmatic access. Refer to Google's documentation on how to set up an App Password. Ensure there are no spaces in the App Password when you paste it into the `.env` file.
+## License
 
-### Usage
-
-Run the application from the command line with the following arguments:
-
-```bash
-python main.py --symbol <STOCK_SYMBOL> --companyName <COMPANY_NAME> --threshold <PRICE_CHANGE_PERCENTAGE> --numArticles <NUMBER_OF_ARTICLES>
-```
-
-- `--symbol`: The stock ticker symbol (e.g., `TSLA`, `AAPL`).
-- `--companyName`: The full company name (e.g., `Tesla`, `Apple Inc.`). Use quotes if the name contains spaces.
-- `--threshold`: The percentage change in stock price (e.g., `3.0` for 3%) that triggers an alert. Defaults to `5.0`.
-- `--numArticles`: The maximum number of news articles to fetch and include in the alert email. Defaults to `3`.
-
-**Example:**
-
-```bash
-python main.py --symbol TSLA --companyName "Tesla" --threshold 3 --numArticles 5
-```
-
-This command will monitor Tesla (TSLA) and send an email alert with the top 5 news articles if the stock price changes by more than 3%.
+This project is for educational and personal use. Please ensure compliance with your local financial regulations when using automated trading features.
