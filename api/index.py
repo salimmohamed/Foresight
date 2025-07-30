@@ -12,6 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
 
 def generate_mock_stock_data(symbol):
@@ -485,11 +486,13 @@ def get_recent_activities():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    api_key_status = "configured" if FINNHUB_API_KEY else "missing"
+    finnhub_status = "configured" if FINNHUB_API_KEY else "missing"
+    news_status = "configured" if NEWS_API_KEY else "missing"
     return jsonify({
         "status": "healthy", 
         "message": "API is running",
-        "finnhub_api_key": api_key_status,
+        "finnhub_api_key": finnhub_status,
+        "news_api_key": news_status,
         "mock_data_enabled": USE_MOCK_DATA
     })
 

@@ -1,8 +1,9 @@
 import type { Stock } from "../types/stock"
+import { API_ENDPOINTS } from "../config/api"
 
 export async function fetchStockData(): Promise<Stock[]> {
   try {
-    const response = await fetch('http://localhost:5000/api/stocks?symbols=AAPL,GOOGL,TSLA,MSFT,NVDA,AMZN,META,NFLX')
+    const response = await fetch(`${API_ENDPOINTS.stocks}?symbols=AAPL,GOOGL,TSLA,MSFT,NVDA,AMZN,META,NFLX`)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -78,7 +79,7 @@ export interface Activity {
 
 export async function fetchPortfolioData(): Promise<PortfolioData> {
   try {
-    const response = await fetch('http://localhost:5000/api/dashboard/portfolio')
+    const response = await fetch(API_ENDPOINTS.portfolio)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -93,7 +94,7 @@ export async function fetchPortfolioData(): Promise<PortfolioData> {
 
 export async function fetchAlertsData(): Promise<AlertsData> {
   try {
-    const response = await fetch('http://localhost:5000/api/dashboard/alerts')
+    const response = await fetch(API_ENDPOINTS.alerts)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -108,7 +109,7 @@ export async function fetchAlertsData(): Promise<AlertsData> {
 
 export async function fetchMarketLeaders(): Promise<MarketLeaders> {
   try {
-    const response = await fetch('http://localhost:5000/api/dashboard/market-leaders')
+    const response = await fetch(API_ENDPOINTS.marketLeaders)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -123,7 +124,7 @@ export async function fetchMarketLeaders(): Promise<MarketLeaders> {
 
 export async function fetchRecentActivities(): Promise<Activity[]> {
   try {
-    const response = await fetch('http://localhost:5000/api/dashboard/activities')
+    const response = await fetch(API_ENDPOINTS.activities)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
