@@ -38,29 +38,37 @@ export default function DemoPage({
   const [marketLeaders, setMarketLeaders] = useState<MarketLeaders | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<{[key: string]: string}>({})
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true)
-        setError(null)
+        setErrors({})
         
-        // Fetch all dashboard data in parallel
-        const [portfolio, alerts, leaders, recentActivities] = await Promise.all([
-          fetchPortfolioData(),
-          fetchAlertsData(),
-          fetchMarketLeaders(),
-          fetchRecentActivities()
-        ])
+        // Fetch data individually to handle partial failures gracefully
+        const fetchPromises = [
+          fetchPortfolioData().then(setPortfolioData).catch(err => {
+            console.error('Portfolio data error:', err)
+            setErrors(prev => ({ ...prev, portfolio: err.message }))
+          }),
+          fetchAlertsData().then(setAlertsData).catch(err => {
+            console.error('Alerts data error:', err)
+            setErrors(prev => ({ ...prev, alerts: err.message }))
+          }),
+          fetchMarketLeaders().then(setMarketLeaders).catch(err => {
+            console.error('Market leaders error:', err)
+            setErrors(prev => ({ ...prev, marketLeaders: err.message }))
+          }),
+          fetchRecentActivities().then(setActivities).catch(err => {
+            console.error('Activities error:', err)
+            setErrors(prev => ({ ...prev, activities: err.message }))
+          })
+        ]
         
-        setPortfolioData(portfolio)
-        setAlertsData(alerts)
-        setMarketLeaders(leaders)
-        setActivities(recentActivities)
+        await Promise.allSettled(fetchPromises)
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
       } finally {
         setLoading(false)
       }
@@ -68,6 +76,56 @@ export default function DemoPage({
 
     fetchDashboardData()
   }, [])
+
+  // Fallback data for when API calls fail
+  const fallbackPortfolioData: PortfolioData = {
+    totalValue: 125000,
+    totalChange: 2500,
+    changePercent: 2.0,
+    holdings: []
+  }
+
+  const fallbackAlertsData: AlertsData = {
+    activeAlerts: 3,
+    triggeredToday: 1,
+    recentAlerts: []
+  }
+
+  const fallbackMarketLeaders: MarketLeaders = {
+    topGainer: { symbol: "AAPL", change: "+2.5% today", price: 185.50 },
+    topLoser: { symbol: "TSLA", change: "-1.8% today", price: 245.20 }
+  }
+
+  const fallbackActivities: Activity[] = [
+    {
+      id: "1",
+      type: "success",
+      title: "AAPL price alert triggered",
+      time: "2 minutes ago",
+      details: "Stock price reached $185.50"
+    },
+    {
+      id: "2",
+      type: "info", 
+      title: "News alert: Tesla earnings report",
+      time: "15 minutes ago",
+      details: "Q4 earnings beat expectations"
+    },
+    {
+      id: "3",
+      type: "warning",
+      title: "Portfolio rebalancing suggestion", 
+      time: "1 hour ago",
+      details: "Consider reducing NVDA position"
+    }
+  ]
+
+  // Use real data if available, otherwise use fallbacks
+  const displayPortfolio = portfolioData || fallbackPortfolioData
+  const displayAlerts = alertsData || fallbackAlertsData
+  const displayMarketLeaders = marketLeaders || fallbackMarketLeaders
+  const displayActivities = activities.length > 0 ? activities : fallbackActivities
+
   return (
     <div className={styles.container}>
       <NavigationHeader
@@ -94,88 +152,85 @@ export default function DemoPage({
             </div>
           )}
 
-          {error && (
+          {/* Show any API errors as warnings */}
+          {Object.keys(errors).length > 0 && (
             <div className={styles.error}>
-              <p>Error: {error}</p>
+              <p>Some data may be unavailable. Using fallback data where needed.</p>
+              {Object.entries(errors).map(([key, error]) => (
+                <p key={key} className="text-sm text-orange-600">• {key}: {error}</p>
+              ))}
             </div>
           )}
 
-          {!loading && !error && (
-            <>
-              <div className={styles.statsGrid}>
-                <Card className={styles.statCard}>
-                  <CardHeader className={styles.statCardHeader}>
-                    <CardTitle className={styles.statCardTitle}>Total Portfolio</CardTitle>
-                    <DollarSign className={styles.statCardIcon} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={styles.statValue}>
-                      ${portfolioData?.totalValue.toLocaleString() || '0'}
+          <div className={styles.statsGrid}>
+            <Card className={styles.statCard}>
+              <CardHeader className={styles.statCardHeader}>
+                <CardTitle className={styles.statCardTitle}>Total Portfolio</CardTitle>
+                <DollarSign className={styles.statCardIcon} />
+              </CardHeader>
+              <CardContent>
+                <div className={styles.statValue}>
+                  ${displayPortfolio.totalValue.toLocaleString()}
+                </div>
+                <p className={styles.statChange}>
+                  {displayPortfolio.changePercent >= 0 ? '+' : ''}{displayPortfolio.changePercent.toFixed(1)}% from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className={styles.statCard}>
+              <CardHeader className={styles.statCardHeader}>
+                <CardTitle className={styles.statCardTitle}>Active Alerts</CardTitle>
+                <BarChart3 className={styles.statCardIcon} />
+              </CardHeader>
+              <CardContent>
+                <div className={styles.statValue}>{displayAlerts.activeAlerts}</div>
+                <p className={styles.statChange}>{displayAlerts.triggeredToday} triggered today</p>
+              </CardContent>
+            </Card>
+
+            <Card className={styles.statCard}>
+              <CardHeader className={styles.statCardHeader}>
+                <CardTitle className={styles.statCardTitle}>Top Gainer</CardTitle>
+                <TrendingUp className={styles.gainIcon} />
+              </CardHeader>
+              <CardContent>
+                <div className={styles.statValue}>{displayMarketLeaders.topGainer.symbol}</div>
+                <p className={styles.gainText}>{displayMarketLeaders.topGainer.change}</p>
+              </CardContent>
+            </Card>
+
+            <Card className={styles.statCard}>
+              <CardHeader className={styles.statCardHeader}>
+                <CardTitle className={styles.statCardTitle}>Top Loser</CardTitle>
+                <TrendingDown className={styles.lossIcon} />
+              </CardHeader>
+              <CardContent>
+                <div className={styles.statValue}>{displayMarketLeaders.topLoser.symbol}</div>
+                <p className={styles.lossText}>{displayMarketLeaders.topLoser.change}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className={styles.activityCard}>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Your latest stock monitoring activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className={styles.activityList}>
+                {displayActivities.map((activity) => (
+                  <div key={activity.id} className={styles.activityItem}>
+                    <div className={`${styles.activityDot} ${styles[`activityDot${activity.type}`]}`}></div>
+                    <div className={styles.activityContent}>
+                      <p className={styles.activityTitle}>{activity.title}</p>
+                      <p className={styles.activityTime}>{activity.time}</p>
                     </div>
-                    <p className={styles.statChange}>
-                      {portfolioData?.changePercent ? 
-                        `${portfolioData.changePercent >= 0 ? '+' : ''}${portfolioData.changePercent.toFixed(1)}% from last month` : 
-                        'No data available'
-                      }
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className={styles.statCard}>
-                  <CardHeader className={styles.statCardHeader}>
-                    <CardTitle className={styles.statCardTitle}>Active Alerts</CardTitle>
-                    <BarChart3 className={styles.statCardIcon} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={styles.statValue}>{alertsData?.activeAlerts || 0}</div>
-                    <p className={styles.statChange}>{alertsData?.triggeredToday || 0} triggered today</p>
-                  </CardContent>
-                </Card>
-
-                <Card className={styles.statCard}>
-                  <CardHeader className={styles.statCardHeader}>
-                    <CardTitle className={styles.statCardTitle}>Top Gainer</CardTitle>
-                    <TrendingUp className={styles.gainIcon} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={styles.statValue}>{marketLeaders?.topGainer.symbol || 'N/A'}</div>
-                    <p className={styles.gainText}>{marketLeaders?.topGainer.change || 'No data'}</p>
-                  </CardContent>
-                </Card>
-
-                <Card className={styles.statCard}>
-                  <CardHeader className={styles.statCardHeader}>
-                    <CardTitle className={styles.statCardTitle}>Top Loser</CardTitle>
-                    <TrendingDown className={styles.lossIcon} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className={styles.statValue}>{marketLeaders?.topLoser.symbol || 'N/A'}</div>
-                    <p className={styles.lossText}>{marketLeaders?.topLoser.change || 'No data'}</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className={styles.activityCard}>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Your latest stock monitoring activities</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className={styles.activityList}>
-                    {activities.map((activity) => (
-                      <div key={activity.id} className={styles.activityItem}>
-                        <div className={`${styles.activityDot} ${styles[`activityDot${activity.type}`]}`}></div>
-                        <div className={styles.activityContent}>
-                          <p className={styles.activityTitle}>{activity.title}</p>
-                          <p className={styles.activityTime}>{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

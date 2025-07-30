@@ -523,3 +523,6 @@ out/
 deploy/
 PROJECT_CONTEXT.md
 .gitignore
+mock-api.py
+test_helper.py
+mock-api.py

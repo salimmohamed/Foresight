@@ -25,6 +25,9 @@ export async function fetchStockData(): Promise<Stock[]> {
     }))
   } catch (error) {
     console.error('Error fetching stock data:', error)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to API server. Make sure your local API is running on http://localhost:5000')
+    }
     throw new Error('Failed to fetch stock data. Please check if the API server is running.')
   }
 }
@@ -88,6 +91,9 @@ export async function fetchPortfolioData(): Promise<PortfolioData> {
     return await response.json()
   } catch (error) {
     console.error('Error fetching portfolio data:', error)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to API server. Make sure your local API is running on http://localhost:5000')
+    }
     throw new Error('Failed to fetch portfolio data.')
   }
 }
@@ -103,6 +109,9 @@ export async function fetchAlertsData(): Promise<AlertsData> {
     return await response.json()
   } catch (error) {
     console.error('Error fetching alerts data:', error)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to API server. Make sure your local API is running on http://localhost:5000')
+    }
     throw new Error('Failed to fetch alerts data.')
   }
 }
@@ -118,6 +127,9 @@ export async function fetchMarketLeaders(): Promise<MarketLeaders> {
     return await response.json()
   } catch (error) {
     console.error('Error fetching market leaders:', error)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to API server. Make sure your local API is running on http://localhost:5000')
+    }
     throw new Error('Failed to fetch market leaders data.')
   }
 }
@@ -133,6 +145,9 @@ export async function fetchRecentActivities(): Promise<Activity[]> {
     return await response.json()
   } catch (error) {
     console.error('Error fetching recent activities:', error)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to API server. Make sure your local API is running on http://localhost:5000')
+    }
     throw new Error('Failed to fetch recent activities.')
   }
 } 
