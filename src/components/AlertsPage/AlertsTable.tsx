@@ -20,7 +20,7 @@ import {
   Volume2,
   Newspaper,
 } from "lucide-react"
-import { Alert } from "./AlertsPage"
+import { Alert } from "@/services/alertService"
 
 interface AlertsTableProps {
   alerts: Alert[]

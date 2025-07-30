@@ -521,3 +521,5 @@ out/
 # Deployment
 .deploy/
 deploy/
+PROJECT_CONTEXT.md
+.gitignore

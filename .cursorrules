@@ -1,0 +1,20 @@
+# Foresight Project Rules
+
+## Project Context
+- This is an AI-powered trading insights platform
+- Frontend: https://foresight-wealth.vercel.app/ (Next.js)
+- API: https://foresight-api-theta.vercel.app/ (Flask)
+- Current state: Frontend has demo pages, backend has core functionality
+- Goal: Connect frontend to real API endpoints
+
+## Key Information
+- API endpoints: /api/health, /api/stocks, /api/dashboard/portfolio, /api/dashboard/alerts
+- Core alert processing is in main.py
+- Frontend uses mock data in stockService.ts
+- Need to replace demos with real functionality
+
+## Development Guidelines
+- Don't run build commands (user handles this)
+- Focus on connecting frontend to deployed API
+- Maintain existing UI/UX patterns
+- Use TypeScript for frontend code 
