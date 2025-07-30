@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { TrendingUp, Mail, Lock, User, Eye, EyeOff, ArrowLeft, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,6 +34,7 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   
   const { signIn, signUp } = useAuth()
+  const router = useRouter()
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -65,9 +67,10 @@ export default function AuthPage() {
       
       if (error) {
         setErrors({ general: error.message })
+        setIsLoading(false)
+      } else {
+        router.push("/dashboard")
       }
-      
-      setIsLoading(false)
     }
   }
 
