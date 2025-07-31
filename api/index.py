@@ -468,9 +468,9 @@ def get_portfolio_data():
     except Exception as e:
         print(f"❌ Error getting portfolio data: {e}")
         return jsonify({
-            "totalValue": 45231.89,
-            "totalChange": 7562.34,
-            "changePercent": 20.1,
+            "totalValue": 0,
+            "totalChange": 0,
+            "changePercent": 0,
             "holdings": []
         })
 
@@ -535,34 +535,52 @@ def get_alerts_data():
 
 @app.route('/api/dashboard/market-leaders', methods=['GET'])
 def get_market_leaders():
-    """Get top gainers and losers."""
+    """Get top gainers and losers from user's portfolio."""
     try:
-        # Get data for major stocks to determine leaders
-        symbols = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'NVDA', 'AMZN', 'META', 'NFLX']
-        stock_data_list = []
+        # Load user's actual portfolio
+        portfolio = load_portfolio()
         
-        for symbol in symbols:
+        if not portfolio["holdings"]:
+            # If no holdings, return empty values
+            return jsonify({
+                "topGainer": {
+                    "symbol": "",
+                    "change": "",
+                    "price": 0
+                },
+                "topLoser": {
+                    "symbol": "", 
+                    "change": "",
+                    "price": 0
+                }
+            })
+        
+        # Get data for user's holdings
+        holdings_data = []
+        
+        for holding in portfolio["holdings"]:
+            symbol = holding["symbol"]
             stock_data = get_stock_data(symbol)
             if "error" not in stock_data and "mock" not in stock_data:
                 metrics = get_stock_metrics(stock_data)
-                stock_data_list.append({
+                holdings_data.append({
                     "symbol": symbol,
                     "changePercent": metrics["change_percent"],
                     "currentPrice": metrics["current_price"]
                 })
             else:
                 metrics = generate_mock_stock_data(symbol)
-                stock_data_list.append({
+                holdings_data.append({
                     "symbol": symbol,
                     "changePercent": metrics["change_percent"],
                     "currentPrice": metrics["current_price"]
                 })
         
         # Sort by change percentage
-        sorted_stocks = sorted(stock_data_list, key=lambda x: x["changePercent"], reverse=True)
+        sorted_holdings = sorted(holdings_data, key=lambda x: x["changePercent"], reverse=True)
         
-        top_gainer = sorted_stocks[0] if sorted_stocks else {"symbol": "AAPL", "changePercent": 5.2, "currentPrice": 185.50}
-        top_loser = sorted_stocks[-1] if sorted_stocks else {"symbol": "TSLA", "changePercent": -2.8, "currentPrice": 245.20}
+        top_gainer = sorted_holdings[0] if sorted_holdings else {"symbol": "AAPL", "changePercent": 5.2, "currentPrice": 185.50}
+        top_loser = sorted_holdings[-1] if sorted_holdings else {"symbol": "TSLA", "changePercent": -2.8, "currentPrice": 245.20}
         
         return jsonify({
             "topGainer": {
@@ -580,8 +598,8 @@ def get_market_leaders():
     except Exception as e:
         print(f"❌ Error getting market leaders: {e}")
         return jsonify({
-            "topGainer": {"symbol": "AAPL", "change": "+5.2% today", "price": 185.50},
-            "topLoser": {"symbol": "TSLA", "change": "-2.8% today", "price": 245.20}
+            "topGainer": {"symbol": "", "change": "", "price": 0},
+            "topLoser": {"symbol": "", "change": "", "price": 0}
         })
 
 @app.route('/api/dashboard/activities', methods=['GET'])
