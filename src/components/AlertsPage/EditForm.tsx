@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { X } from "lucide-react"
-import { Alert, UpdateAlertData } from "@/services/alertService"
+import { Alert, UpdateAlertData } from "@/services/supabaseAlertService"
 
 interface EditFormProps {
   isOpen: boolean

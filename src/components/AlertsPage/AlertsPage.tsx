@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bell, BellRing, Plus, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react"
 import styles from "./AlertsPage.module.css"
-import { fetchAlerts, createAlert, updateAlert, deleteAlert, processAlerts, type Alert, type UpdateAlertData } from "@/services/alertService"
+import { fetchAlerts, createAlert, updateAlert, deleteAlert, processAlerts, type Alert, type UpdateAlertData } from "@/services/supabaseAlertService"
 
 export interface AlertsPageProps {
   onThemeToggle?: () => void

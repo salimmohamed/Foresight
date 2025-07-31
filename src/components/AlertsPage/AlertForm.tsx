@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { X } from "lucide-react"
-import { CreateAlertData } from "@/services/alertService"
+import { CreateAlertData } from "@/services/supabaseAlertService"
 
 interface AlertFormProps {
   isOpen: boolean
@@ -39,6 +39,7 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
       alertType: formData.alertType,
       emailNotifications: formData.emailNotifications,
       inAppNotifications: formData.inAppNotifications,
+      description: formData.notes || undefined,
     }
     
     // Add threshold or percentage based on alert type

@@ -21,7 +21,7 @@ import {
   Newspaper,
   ArrowUpDown,
 } from "lucide-react"
-import { Alert } from "@/services/alertService"
+import { Alert } from "@/services/supabaseAlertService"
 
 interface AlertsTableProps {
   alerts: Alert[]
