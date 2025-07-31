@@ -338,6 +338,49 @@ export default function DemoPage({
             </div>
           )}
 
+          {/* Quick Actions */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Manage your alerts and portfolio</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => router.push('/alerts')}
+                  className="flex items-center gap-2"
+                >
+                  <Bell className="h-4 w-4" />
+                  View All Alerts
+                </Button>
+                <Button 
+                  onClick={() => router.push('/alerts?create=true')}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create New Alert
+                </Button>
+                <Button 
+                  onClick={openPortfolioModal}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Manage Portfolio
+                </Button>
+                <Button 
+                  onClick={() => router.push('/market')}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Market Overview
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className={styles.statsGrid}>
             <Card className={styles.statCard}>
               <CardHeader className={styles.statCardHeader}>
@@ -387,49 +430,6 @@ export default function DemoPage({
               </CardContent>
             </Card>
           </div>
-
-          {/* Quick Actions */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your alerts and portfolio</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Button 
-                  onClick={() => router.push('/alerts')}
-                  className="flex items-center gap-2"
-                >
-                  <Bell className="h-4 w-4" />
-                  View All Alerts
-                </Button>
-                <Button 
-                  onClick={() => router.push('/alerts?create=true')}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create New Alert
-                </Button>
-                <Button 
-                  onClick={openPortfolioModal}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <DollarSign className="h-4 w-4" />
-                  Manage Portfolio
-                </Button>
-                <Button 
-                  onClick={() => router.push('/market')}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Market Overview
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
 
           <Card className={styles.activityCard} style={{ position: 'relative' }}>
             <CardHeader>
