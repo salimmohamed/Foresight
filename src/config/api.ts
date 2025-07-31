@@ -8,7 +8,7 @@ export const API_BASE_URL = isDevelopment
 export const API_ENDPOINTS = {
   stocks: `${API_BASE_URL}/api/stocks`,
   stock: (symbol: string) => `${API_BASE_URL}/api/stock/${symbol}`,
-  portfolio: `${API_BASE_URL}/api/dashboard/portfolio`,
+  dashboardPortfolio: `${API_BASE_URL}/api/dashboard/portfolio`,
   alerts: `${API_BASE_URL}/api/dashboard/alerts`,
   marketLeaders: `${API_BASE_URL}/api/dashboard/market-leaders`,
   activities: `${API_BASE_URL}/api/dashboard/activities`,
