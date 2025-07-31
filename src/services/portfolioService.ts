@@ -88,7 +88,8 @@ export const savePortfolioHoldings = async (holdings: PortfolioHolding[]): Promi
       user_id: userId,
       symbol: holding.symbol.toUpperCase(),
       shares: holding.shares,
-      purchase_price: holding.purchase_price
+      purchase_price: holding.purchase_price,
+      purchase_date: holding.purchase_date || new Date().toISOString().split('T')[0]
     }))
 
     // Insert new holdings
@@ -120,7 +121,7 @@ export const addPortfolioHolding = async (holding: Omit<PortfolioHolding, 'id' |
         symbol: holding.symbol.toUpperCase(),
         shares: holding.shares,
         purchase_price: holding.purchase_price,
-        purchase_date: holding.purchase_date || new Date().toISOString() // Use provided date or current date
+        purchase_date: holding.purchase_date || new Date().toISOString().split('T')[0] // Use provided date or current date
       })
 
     if (error) {
@@ -187,6 +188,7 @@ export const updatePortfolioHolding = async (holdingId: string, updates: Partial
 
 // Calculate days held and returns
 const calculateHoldingPerformance = (holding: PortfolioHolding, currentPrice: number) => {
+  // Use purchase_date if available, otherwise fall back to created_at
   const purchaseDate = holding.purchase_date ? new Date(holding.purchase_date) : new Date(holding.created_at || '')
   const currentDate = new Date()
   const daysHeld = Math.max(1, Math.floor((currentDate.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
