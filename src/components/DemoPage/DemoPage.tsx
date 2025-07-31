@@ -379,10 +379,13 @@ export default function DemoPage({
               </CardHeader>
               <CardContent>
                 <div className={styles.statValue}>
-                  ${displayPortfolio.totalValue.toLocaleString()}
+                  {displayPortfolio.totalValue > 0 ? `$${displayPortfolio.totalValue.toLocaleString()}` : "$0"}
                 </div>
                 <p className={styles.statChange}>
-                  {displayPortfolio.changePercent >= 0 ? '+' : ''}{displayPortfolio.changePercent.toFixed(1)}% from last month
+                  {displayPortfolio.totalValue > 0 
+                    ? `${displayPortfolio.changePercent >= 0 ? '+' : ''}${displayPortfolio.changePercent.toFixed(1)}% from last month`
+                    : "Add stocks to your portfolio"
+                  }
                 </p>
               </CardContent>
             </Card>
@@ -400,26 +403,83 @@ export default function DemoPage({
 
             <Card className={styles.statCard}>
               <CardHeader className={styles.statCardHeader}>
-                <CardTitle className={styles.statCardTitle}>Top Gainer</CardTitle>
+                <CardTitle className={styles.statCardTitle}>
+                  {displayPortfolio.holdings && displayPortfolio.holdings.length > 0 ? 'Portfolio Gainer' : 'Top Gainer'}
+                </CardTitle>
                 <TrendingUp className={styles.gainIcon} />
               </CardHeader>
               <CardContent>
-                <div className={styles.statValue}>{displayMarketLeaders.topGainer.symbol}</div>
-                <p className={styles.gainText}>{displayMarketLeaders.topGainer.change}</p>
+                <div className={styles.statValue}>
+                  {displayMarketLeaders.topGainer.symbol || "No holdings"}
+                </div>
+                <p className={styles.gainText}>
+                  {displayMarketLeaders.topGainer.change || "Add stocks to see performance"}
+                </p>
               </CardContent>
             </Card>
 
             <Card className={styles.statCard}>
               <CardHeader className={styles.statCardHeader}>
-                <CardTitle className={styles.statCardTitle}>Top Loser</CardTitle>
+                <CardTitle className={styles.statCardTitle}>
+                  {displayPortfolio.holdings && displayPortfolio.holdings.length > 0 ? 'Portfolio Loser' : 'Top Loser'}
+                </CardTitle>
                 <TrendingDown className={styles.lossIcon} />
               </CardHeader>
               <CardContent>
-                <div className={styles.statValue}>{displayMarketLeaders.topLoser.symbol}</div>
-                <p className={styles.lossText}>{displayMarketLeaders.topLoser.change}</p>
+                <div className={styles.statValue}>
+                  {displayMarketLeaders.topLoser.symbol || "No holdings"}
+                </div>
+                <p className={styles.lossText}>
+                  {displayMarketLeaders.topLoser.change || "Add stocks to see performance"}
+                </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Portfolio Holdings */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Portfolio Holdings</CardTitle>
+              <CardDescription>Your current stock positions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {displayPortfolio.holdings && displayPortfolio.holdings.length > 0 ? (
+                <div className="space-y-3">
+                  {displayPortfolio.holdings.map((holding, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-lg">{holding.symbol}</span>
+                          <span className={`font-semibold ${holding.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {holding.changePercent >= 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {holding.shares} shares @ ${holding.currentPrice}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Position: ${holding.positionValue.toLocaleString()} 
+                          <span className={`ml-2 ${holding.positionChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ({holding.positionChange >= 0 ? '+' : ''}${holding.positionChange.toFixed(2)})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Holdings Yet</h3>
+                  <p className="text-muted-foreground mb-4">Start building your portfolio by adding your first stock</p>
+                  <Button onClick={openPortfolioModal} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Your First Stock
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className={styles.activityCard} style={{ position: 'relative' }}>
             <CardHeader>
