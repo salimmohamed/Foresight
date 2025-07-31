@@ -56,6 +56,22 @@ interface DemoPageProps {
   onSettingsClick?: () => void
 }
 
+// Utility function to format days into years and days
+const formatHoldingDuration = (days: number): string => {
+  if (days < 365) {
+    return `${days} days`
+  }
+  
+  const years = Math.floor(days / 365)
+  const remainingDays = days % 365
+  
+  if (remainingDays === 0) {
+    return `${years} year${years > 1 ? 's' : ''}`
+  }
+  
+  return `${years} year${years > 1 ? 's' : ''}, ${remainingDays} day${remainingDays > 1 ? 's' : ''}`
+}
+
 export default function DemoPage({
   userAvatar,
   notificationCount = 5,
@@ -491,7 +507,7 @@ export default function DemoPage({
                         {holding.daysHeld && (
                           <div className="text-xs text-muted-foreground mt-1">
                             <span>Purchased: ${holding.purchasePrice} • </span>
-                            <span>Held: {holding.daysHeld} days • </span>
+                            <span>Held: {formatHoldingDuration(holding.daysHeld)} • </span>
                             <span>Total Return: {holding.totalReturn ? `${holding.totalReturn >= 0 ? '+' : ''}${holding.totalReturn.toFixed(1)}%` : 'N/A'} • </span>
                             <span>Annualized: {holding.annualizedReturn ? `${holding.annualizedReturn >= 0 ? '+' : ''}${holding.annualizedReturn.toFixed(1)}%` : 'N/A'}</span>
                           </div>
