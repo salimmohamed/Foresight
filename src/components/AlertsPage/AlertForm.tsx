@@ -33,19 +33,41 @@ export function AlertForm({ isOpen, onClose, onSubmit }: AlertFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Validate required fields
+    if (!formData.symbol.trim()) {
+      alert('Please enter a stock symbol')
+      return
+    }
+    
+    if (!formData.alertType) {
+      alert('Please select an alert type')
+      return
+    }
+    
+    // Validate threshold/percentage based on alert type
+    if ((formData.alertType === "price-above" || formData.alertType === "price-below") && !formData.threshold) {
+      alert('Please enter a price threshold')
+      return
+    }
+    
+    if ((formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss" || formData.alertType === "percentage-change") && !formData.percentage) {
+      alert('Please enter a percentage value')
+      return
+    }
+    
     const alertData: CreateAlertData = {
-      symbol: formData.symbol,
-      companyName: formData.company || undefined,
+      symbol: formData.symbol.trim(),
+      companyName: formData.company?.trim() || undefined,
       alertType: formData.alertType,
       emailNotifications: formData.emailNotifications,
       inAppNotifications: formData.inAppNotifications,
-      description: formData.notes || undefined,
+      description: formData.notes?.trim() || undefined,
     }
     
     // Add threshold or percentage based on alert type
     if (formData.alertType === "price-above" || formData.alertType === "price-below") {
       alertData.threshold = parseFloat(formData.threshold)
-    } else if (formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss") {
+    } else if (formData.alertType === "percentage-gain" || formData.alertType === "percentage-loss" || formData.alertType === "percentage-change") {
       alertData.percentage = parseFloat(formData.percentage)
     }
     

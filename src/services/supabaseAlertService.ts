@@ -44,10 +44,19 @@ export interface UpdateAlertData {
 
 // Get current user ID
 const getCurrentUserId = async (): Promise<string> => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error) {
+    console.error('Auth error:', error)
+    throw new Error('Authentication error')
+  }
+  
   if (!user) {
+    console.error('No user found')
     throw new Error('User not authenticated')
   }
+  
+  console.log('Current user ID:', user.id)
   return user.id
 }
 
@@ -73,7 +82,9 @@ const convertSupabaseAlertToFrontend = (supabaseAlert: any): Alert => {
 
 // Convert frontend alert format to Supabase format
 const convertFrontendAlertToSupabase = (frontendAlert: CreateAlertData) => {
-  return {
+  console.log('Converting frontend alert to Supabase format:', frontendAlert)
+  
+  const supabaseData = {
     symbol: frontendAlert.symbol.toUpperCase(),
     company_name: frontendAlert.companyName || '',
     alert_type: frontendAlert.alertType,
@@ -84,6 +95,9 @@ const convertFrontendAlertToSupabase = (frontendAlert: CreateAlertData) => {
     in_app_notifications: frontendAlert.inAppNotifications ?? true,
     description: frontendAlert.description
   }
+  
+  console.log('Converted to Supabase format:', supabaseData)
+  return supabaseData
 }
 
 // Get all alerts for the current user
@@ -115,6 +129,8 @@ export async function createAlert(alertData: CreateAlertData): Promise<Alert> {
     const userId = await getCurrentUserId()
     const supabaseAlertData = convertFrontendAlertToSupabase(alertData)
     
+    console.log('Creating alert with data:', { ...supabaseAlertData, user_id: userId })
+    
     const { data, error } = await supabase
       .from('alerts')
       .insert([{ ...supabaseAlertData, user_id: userId }])
@@ -122,13 +138,16 @@ export async function createAlert(alertData: CreateAlertData): Promise<Alert> {
       .single()
 
     if (error) {
-      console.error('Error creating alert:', error)
-      throw error
+      console.error('Supabase error creating alert:', error)
+      throw new Error(`Database error: ${error.message}`)
     }
 
     return convertSupabaseAlertToFrontend(data)
   } catch (error) {
     console.error('Error in createAlert:', error)
+    if (error instanceof Error) {
+      throw error
+    }
     throw new Error('Failed to create alert.')
   }
 }
