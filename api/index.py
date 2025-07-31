@@ -113,7 +113,6 @@ def process_alert(alert):
             alert['triggeredPrice'] = current_price
             alert['triggeredChange'] = price_change
             
-            # Here you would integrate with your main.py email functionality
             # For now, we'll just log it
             print(f"🚨 ALERT TRIGGERED: {symbol} - {trigger_message}")
             

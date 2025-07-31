@@ -1,20 +1,360 @@
-# Foresight Project Rules
+# Foresight Project Rules & Testing Guidelines
 
-## Project Context
-- This is an AI-powered trading insights platform
-- Frontend: https://foresight-wealth.vercel.app/ (Next.js)
-- API: https://foresight-api-theta.vercel.app/ (Flask)
-- Current state: Frontend has demo pages, backend has core functionality
-- Goal: Connect frontend to real API endpoints
+## 🏗️ **Project Architecture Overview**
 
-## Key Information
-- API endpoints: /api/health, /api/stocks, /api/dashboard/portfolio, /api/dashboard/alerts
-- Core alert processing is in main.py
-- Frontend uses mock data in stockService.ts
-- Need to replace demos with real functionality
+### **Deployment Structure**
+- **Frontend**: https://foresight-wealth.vercel.app/ (Next.js 14 with App Router)
+- **Backend API**: https://foresight-api-theta.vercel.app/ (Flask Python)
+- **Database**: Supabase (PostgreSQL with Row Level Security)
+- **Authentication**: Supabase Auth with JWT tokens
 
-## Development Guidelines
-- Don't run build commands (user handles this)
-- Focus on connecting frontend to deployed API
-- Maintain existing UI/UX patterns
-- Use TypeScript for frontend code 
+### **Codebase Organization**
+```
+Foresight/
+├── api/                          # Backend Flask API
+│   ├── index.py                 # Main Flask application
+│   ├── vercel.json              # Vercel deployment config
+│   ├── requirements.txt         # Python dependencies
+│   └── main.py                  # Core alert processing logic
+├── src/                         # Frontend Next.js application
+│   ├── app/                     # Next.js App Router pages
+│   ├── components/              # React components
+│   ├── services/                # API service layers
+│   ├── contexts/                # React contexts (Auth, etc.)
+│   ├── lib/                     # Utility libraries
+│   └── types/                   # TypeScript type definitions
+├── .env.local                   # Local environment variables
+└── .cursorrules                 # This file
+```
+
+## 🔐 **Supabase Authentication & Security Rules**
+
+### **CRITICAL: Never Modify These Authentication Patterns**
+
+#### **1. Auth Context Structure**
+```typescript
+// src/contexts/AuthContext.tsx - NEVER MODIFY THIS PATTERN
+interface AuthContextType {
+  user: User | null
+  session: Session | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>
+  signOut: () => Promise<void>
+}
+```
+
+#### **2. Supabase Client Configuration**
+```typescript
+// src/lib/supabase.ts - NEVER CHANGE THESE ENVIRONMENT VARIABLES
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+#### **3. User ID Retrieval Pattern**
+```typescript
+// ALWAYS use this pattern for getting current user ID
+const getCurrentUserId = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+  return user.id
+}
+```
+
+#### **4. Row Level Security (RLS) Policies**
+- **NEVER** disable RLS policies in Supabase
+- **ALWAYS** include `user_id` in database queries
+- **NEVER** use admin keys in frontend code
+- **ALWAYS** use anon key for client-side operations
+
+### **Database Schema Requirements**
+```sql
+-- portfolio_holdings table MUST have these columns:
+CREATE TABLE portfolio_holdings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  symbol TEXT NOT NULL,
+  shares INTEGER NOT NULL,
+  purchase_price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS Policy MUST be enabled:
+ALTER TABLE portfolio_holdings ENABLE ROW LEVEL SECURITY;
+
+-- Policy MUST restrict access to user's own data:
+CREATE POLICY "Users can only access their own portfolio holdings"
+ON portfolio_holdings FOR ALL
+USING (auth.uid() = user_id);
+```
+
+## 🧪 **Comprehensive Testing Protocol**
+
+### **Pre-Deployment Testing Checklist**
+
+#### **1. Local Development Testing**
+```bash
+# Frontend Testing
+npm run dev                    # Start Next.js dev server
+# Test on: http://localhost:3000
+
+# Backend Testing  
+cd api
+python index.py               # Start Flask API
+# Test on: http://localhost:5000
+```
+
+#### **2. Authentication Testing**
+- [ ] **User Registration**: Create new account via `/auth` page
+- [ ] **User Login**: Sign in with existing credentials
+- [ ] **Session Persistence**: Refresh page, verify user stays logged in
+- [ ] **Logout**: Sign out, verify redirect to login page
+- [ ] **Protected Routes**: Verify unauthenticated users can't access dashboard
+
+#### **3. Portfolio Management Testing**
+- [ ] **Add Holdings**: Add stocks via "Manage Portfolio" modal
+- [ ] **Data Validation**: Test invalid inputs (negative shares, empty symbols)
+- [ ] **Database Persistence**: Save portfolio, refresh page, verify data loads
+- [ ] **User Isolation**: Create multiple users, verify portfolios are separate
+- [ ] **Edit Holdings**: Modify existing holdings
+- [ ] **Remove Holdings**: Delete holdings, verify removal
+
+#### **4. Real-time Data Testing**
+- [ ] **Stock Data**: Verify current prices load from Alpha Vantage API
+- [ ] **Portfolio Calculations**: Check position values and gains/losses
+- [ ] **Auto-refresh**: Wait 30 seconds, verify data updates
+- [ ] **Error Handling**: Disconnect internet, verify fallback data displays
+- [ ] **API Failures**: Test with invalid stock symbols
+
+#### **5. Alert System Testing**
+- [ ] **Create Alerts**: Add price-based and percentage-based alerts
+- [ ] **Alert Processing**: Trigger alerts manually via API
+- [ ] **Alert Management**: Edit, pause, and delete alerts
+- [ ] **Email Notifications**: Verify email alerts (if configured)
+
+### **Vercel Deployment Testing**
+
+#### **1. Environment Variables Verification**
+```bash
+# Frontend Environment Variables (Vercel Dashboard)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=https://foresight-api-theta.vercel.app
+
+# Backend Environment Variables (Vercel Dashboard)
+FINNHUB_API_KEY=your_finnhub_key
+NEWS_API_KEY=your_news_api_key
+```
+
+#### **2. Production API Testing**
+```bash
+# Health Check
+curl https://foresight-api-theta.vercel.app/api/health
+
+# Stock Data
+curl https://foresight-api-theta.vercel.app/api/stocks
+
+# Portfolio Data
+curl https://foresight-api-theta.vercel.app/api/dashboard/portfolio
+```
+
+#### **3. Frontend Production Testing**
+- [ ] **Homepage**: https://foresight-wealth.vercel.app/
+- [ ] **Authentication**: https://foresight-wealth.vercel.app/auth
+- [ ] **Dashboard**: https://foresight-wealth.vercel.app/dashboard
+- [ ] **Alerts**: https://foresight-wealth.vercel.app/alerts
+- [ ] **Market**: https://foresight-wealth.vercel.app/market
+
+#### **4. Cross-Origin Testing**
+- [ ] **API CORS**: Verify frontend can call backend API
+- [ ] **Supabase Connection**: Verify database connections work
+- [ ] **External APIs**: Verify Alpha Vantage and News API calls
+
+### **Post-Deployment Verification**
+
+#### **1. User Journey Testing**
+1. **New User Flow**:
+   - Visit homepage
+   - Click "Get Started" or "Sign Up"
+   - Create account with email/password
+   - Verify email confirmation (if enabled)
+   - Access dashboard
+   - Add first portfolio holding
+   - Verify data persistence
+
+2. **Returning User Flow**:
+   - Visit homepage
+   - Sign in with existing credentials
+   - Access dashboard
+   - Verify portfolio data loads
+   - Test portfolio management features
+
+#### **2. Data Integrity Testing**
+- [ ] **Portfolio Persistence**: Add holdings, wait 24 hours, verify data remains
+- [ ] **User Data Isolation**: Multiple users, verify no data leakage
+- [ ] **Real-time Updates**: Verify stock prices update correctly
+- [ ] **Error Recovery**: Test system behavior during API outages
+
+#### **3. Performance Testing**
+- [ ] **Page Load Times**: < 3 seconds for initial load
+- [ ] **API Response Times**: < 2 seconds for data endpoints
+- [ ] **Database Queries**: < 1 second for portfolio operations
+- [ ] **Memory Usage**: Monitor for memory leaks during extended use
+
+## 🚀 **Deployment Guidelines**
+
+### **Build Command Restrictions**
+- **NEVER** run `npm run build` or similar commands
+- **User handles all build and deployment processes**
+- **Focus on code changes and testing only**
+
+### **Code Quality Standards**
+- **TypeScript**: Use strict typing for all frontend code
+- **Error Handling**: Implement comprehensive error boundaries
+- **Loading States**: Always show loading indicators during async operations
+- **Validation**: Client-side and server-side input validation
+- **Security**: Never expose API keys or sensitive data in frontend
+
+### **API Integration Patterns**
+```typescript
+// ALWAYS use this pattern for API calls
+export async function fetchData(): Promise<DataType> {
+  try {
+    const response = await fetch(API_ENDPOINTS.endpoint)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    throw new Error('Failed to fetch data. Please try again.')
+  }
+}
+```
+
+### **State Management Patterns**
+```typescript
+// ALWAYS use this pattern for async state updates
+const [data, setData] = useState<DataType | null>(null)
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState<string | null>(null)
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const result = await fetchData()
+      setData(result)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  fetchData()
+}, [])
+```
+
+## 🔧 **Maintenance & Troubleshooting**
+
+### **Common Issues & Solutions**
+
+#### **1. Authentication Issues**
+- **Problem**: Users can't log in after deployment
+- **Solution**: Verify Supabase environment variables in Vercel
+- **Check**: Supabase project settings and RLS policies
+
+#### **2. Portfolio Data Not Loading**
+- **Problem**: Portfolio holdings don't appear
+- **Solution**: Check user authentication and database permissions
+- **Check**: Supabase logs for query errors
+
+#### **3. API Connection Issues**
+- **Problem**: Frontend can't connect to backend
+- **Solution**: Verify API_BASE_URL configuration
+- **Check**: CORS settings in Flask API
+
+#### **4. Real-time Data Issues**
+- **Problem**: Stock prices not updating
+- **Solution**: Check Alpha Vantage API key and rate limits
+- **Check**: API response format and error handling
+
+### **Monitoring & Logging**
+- **Frontend**: Use browser console for debugging
+- **Backend**: Check Vercel function logs
+- **Database**: Monitor Supabase dashboard for query performance
+- **External APIs**: Monitor rate limits and response times
+
+## 📋 **Development Workflow**
+
+### **Before Making Changes**
+1. **Create feature branch** from main
+2. **Test locally** with development environment
+3. **Verify authentication** still works
+4. **Check database queries** don't break existing data
+5. **Test error scenarios** and edge cases
+
+### **After Making Changes**
+1. **Run local tests** using the testing checklist above
+2. **Verify no console errors** in browser
+3. **Test user flows** end-to-end
+4. **Check API responses** are correct
+5. **Verify data persistence** works as expected
+
+### **Before Deployment**
+1. **Complete testing checklist** above
+2. **Verify environment variables** are set correctly
+3. **Check API endpoints** respond correctly
+4. **Test authentication flows** work
+5. **Verify portfolio management** functions properly
+
+## 📝 **Supabase SQL Script Management**
+
+### **CRITICAL: Supabase Setup Script Rules**
+- **ALWAYS** replace the entire contents of `supabase-setup.sql` when creating new scripts
+- **NEVER** append to existing content in `supabase-setup.sql`
+- **ALWAYS** start with a fresh, complete script that includes all necessary setup
+- **INCLUDE** all required tables, policies, and indexes in the single script
+- **VERIFY** the script is complete and self-contained before committing
+
+### **Script Creation Process**
+1. **Clear existing content** from `supabase-setup.sql`
+2. **Write complete setup script** with all required components
+3. **Include all necessary elements**:
+   - Table creation statements
+   - Row Level Security (RLS) policies
+   - Indexes for performance
+   - Any required functions or triggers
+4. **Test the script** in Supabase SQL Editor
+5. **Document any special requirements** in comments
+
+### **Example Script Structure**
+```sql
+-- Supabase Setup Script
+-- Complete database setup for Foresight application
+
+-- 1. Create tables
+CREATE TABLE portfolio_holdings (
+  -- table definition
+);
+
+-- 2. Enable RLS
+ALTER TABLE portfolio_holdings ENABLE ROW LEVEL SECURITY;
+
+-- 3. Create policies
+CREATE POLICY "Users can only access their own portfolio holdings"
+ON portfolio_holdings FOR ALL
+USING (auth.uid() = user_id);
+
+-- 4. Create indexes
+CREATE INDEX idx_portfolio_holdings_user_id ON portfolio_holdings(user_id);
+```
+
+This comprehensive guide ensures the codebase remains stable, secure, and functional across all deployments while maintaining the integrity of the authentication and data management systems. 

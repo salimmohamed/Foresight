@@ -29,13 +29,21 @@ interface PortfolioData {
   totalValue: number
   totalChange: number
   changePercent: number
+  totalInvested: number
+  totalReturn: number
+  averageAnnualizedReturn: number
   holdings: Array<{
     symbol: string
     shares: number
     currentPrice: number
+    purchasePrice: number
+    purchaseDate?: string
     positionValue: number
     positionChange: number
     changePercent: number
+    daysHeld?: number
+    totalReturn?: number
+    annualizedReturn?: number
   }>
 }
 
@@ -70,7 +78,8 @@ export default function DemoPage({
   const [newHolding, setNewHolding] = useState({
     symbol: "",
     shares: "",
-    purchasePrice: ""
+    purchasePrice: "",
+    purchaseDate: new Date().toISOString().split('T')[0] // Default to today
   })
   const [savingPortfolio, setSavingPortfolio] = useState(false)
 
@@ -202,7 +211,7 @@ export default function DemoPage({
   }
 
   const addHolding = () => {
-    if (!newHolding.symbol || !newHolding.shares || !newHolding.purchasePrice) {
+    if (!newHolding.symbol || !newHolding.shares || !newHolding.purchasePrice || !newHolding.purchaseDate) {
       alert('Please fill in all fields')
       return
     }
@@ -210,6 +219,7 @@ export default function DemoPage({
     const symbol = newHolding.symbol.toUpperCase().trim()
     const shares = parseInt(newHolding.shares)
     const purchase_price = parseFloat(newHolding.purchasePrice)
+    const purchase_date = newHolding.purchaseDate
 
     // Validation
     if (shares <= 0) {
@@ -235,11 +245,12 @@ export default function DemoPage({
     const holding: PortfolioHolding = {
       symbol,
       shares,
-      purchase_price
+      purchase_price,
+      purchase_date
     }
     
     setPortfolioHoldings(prev => [...prev, holding])
-    setNewHolding({ symbol: "", shares: "", purchasePrice: "" })
+    setNewHolding({ symbol: "", shares: "", purchasePrice: "", purchaseDate: new Date().toISOString().split('T')[0] })
   }
 
   const removeHolding = (index: number) => {
@@ -259,6 +270,9 @@ export default function DemoPage({
     totalValue: 125000,
     totalChange: 2500,
     changePercent: 2.0,
+    totalInvested: 122500,
+    totalReturn: 2.04,
+    averageAnnualizedReturn: 15.2,
     holdings: []
   }
 
@@ -474,6 +488,14 @@ export default function DemoPage({
                             ({holding.positionChange >= 0 ? '+' : ''}${holding.positionChange.toFixed(2)})
                           </span>
                         </div>
+                        {holding.daysHeld && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <span>Purchased: ${holding.purchasePrice} • </span>
+                            <span>Held: {holding.daysHeld} days • </span>
+                            <span>Total Return: {holding.totalReturn ? `${holding.totalReturn >= 0 ? '+' : ''}${holding.totalReturn.toFixed(1)}%` : 'N/A'} • </span>
+                            <span>Annualized: {holding.annualizedReturn ? `${holding.annualizedReturn >= 0 ? '+' : ''}${holding.annualizedReturn.toFixed(1)}%` : 'N/A'}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -621,7 +643,7 @@ export default function DemoPage({
                 {/* Add New Holding */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Add New Holding</h3>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="symbol">Symbol *</Label>
                       <Input
@@ -672,11 +694,26 @@ export default function DemoPage({
                         }}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="purchaseDate">Purchase Date *</Label>
+                      <Input
+                        id="purchaseDate"
+                        type="date"
+                        value={newHolding.purchaseDate}
+                        onChange={(e) => setNewHolding(prev => ({ ...prev, purchaseDate: e.target.value }))}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            addHolding()
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                   <Button 
                     onClick={addHolding} 
                     className="mt-3"
-                    disabled={!newHolding.symbol || !newHolding.shares || !newHolding.purchasePrice}
+                    disabled={!newHolding.symbol || !newHolding.shares || !newHolding.purchasePrice || !newHolding.purchaseDate}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Holding
