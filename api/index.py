@@ -60,6 +60,8 @@ def save_portfolio(portfolio):
     except Exception as e:
         print(f"Error saving portfolio: {e}")
 
+
+
 def process_alert(alert):
     """Process an alert using the logic from main.py"""
     try:

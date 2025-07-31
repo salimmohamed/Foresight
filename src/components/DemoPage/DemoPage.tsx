@@ -8,25 +8,36 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, RefreshCw, Plus, Bell, X, Trash2, Save } from "lucide-react"
 import { 
-  fetchPortfolioData, 
   fetchAlertsData, 
-  fetchMarketLeaders, 
   fetchRecentActivities,
-  type PortfolioData,
   type AlertsData,
   type MarketLeaders,
   type Activity
 } from "@/services/stockService"
 import { 
+  type PortfolioHolding, 
   loadPortfolioHoldings, 
-  savePortfolioHoldings, 
-  addPortfolioHolding, 
-  removePortfolioHolding,
-  type PortfolioHolding 
+  savePortfolioHoldings,
+  getPortfolioData,
+  getPortfolioMarketLeaders
 } from "@/services/portfolioService"
-import { API_ENDPOINTS } from "@/config/api"
+
 import styles from './DemoPage.module.css'
 import { useRouter } from "next/navigation"
+
+interface PortfolioData {
+  totalValue: number
+  totalChange: number
+  changePercent: number
+  holdings: Array<{
+    symbol: string
+    shares: number
+    currentPrice: number
+    positionValue: number
+    positionChange: number
+    changePercent: number
+  }>
+}
 
 interface DemoPageProps {
   userAvatar?: string
@@ -71,19 +82,19 @@ export default function DemoPage({
         
         // Fetch data individually to handle partial failures gracefully
         const fetchPromises = [
-          fetchPortfolioData().then(setPortfolioData).catch(err => {
+          getPortfolioData().then(setPortfolioData).catch((err: any) => {
             console.error('Portfolio data error:', err)
             setErrors(prev => ({ ...prev, portfolio: err.message }))
           }),
-          fetchAlertsData().then(setAlertsData).catch(err => {
+          fetchAlertsData().then(setAlertsData).catch((err: any) => {
             console.error('Alerts data error:', err)
             setErrors(prev => ({ ...prev, alerts: err.message }))
           }),
-          fetchMarketLeaders().then(setMarketLeaders).catch(err => {
+          getPortfolioMarketLeaders().then(setMarketLeaders).catch((err: any) => {
             console.error('Market leaders error:', err)
             setErrors(prev => ({ ...prev, marketLeaders: err.message }))
           }),
-          fetchRecentActivities().then(setActivities).catch(err => {
+          fetchRecentActivities().then(setActivities).catch((err: any) => {
             console.error('Activities error:', err)
             setErrors(prev => ({ ...prev, activities: err.message }))
           })
@@ -111,7 +122,7 @@ export default function DemoPage({
       
       // Fetch data individually to handle partial failures gracefully
       const fetchPromises = [
-        fetchPortfolioData().then(setPortfolioData).catch(err => {
+        getPortfolioData().then(setPortfolioData).catch((err: any) => {
           console.error('Portfolio data error:', err)
           setErrors(prev => ({ ...prev, portfolio: err.message }))
         }),
@@ -119,7 +130,7 @@ export default function DemoPage({
           console.error('Alerts data error:', err)
           setErrors(prev => ({ ...prev, alerts: err.message }))
         }),
-        fetchMarketLeaders().then(setMarketLeaders).catch(err => {
+        getPortfolioMarketLeaders().then(setMarketLeaders).catch((err: any) => {
           console.error('Market leaders error:', err)
           setErrors(prev => ({ ...prev, marketLeaders: err.message }))
         }),
