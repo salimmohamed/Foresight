@@ -424,7 +424,7 @@ export default function DemoPage({
                 </div>
                 <p className={styles.statChange}>
                   {displayPortfolio.totalValue > 0 
-                    ? `${displayPortfolio.changePercent >= 0 ? '+' : ''}${displayPortfolio.changePercent.toFixed(1)}% from last month`
+                    ? `${displayPortfolio.changePercent >= 0 ? '+' : ''}${displayPortfolio.changePercent.toFixed(1)}% (${displayPortfolio.totalChange >= 0 ? '+' : ''}$${displayPortfolio.totalChange.toFixed(2)})`
                     : "Add stocks to your portfolio"
                   }
                 </p>

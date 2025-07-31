@@ -224,35 +224,45 @@ export const getPortfolioData = async () => {
       }
     }
 
-    // Get current prices for all holdings
-    const pricePromises = holdings.map(async (holding) => {
-      try {
-        const response = await fetch(`/api/stock/${holding.symbol}`)
-        if (response.ok) {
-          const data = await response.json()
-          const performance = calculateHoldingPerformance(holding, data.currentPrice)
-          
-          return {
-            ...holding,
-            currentPrice: data.currentPrice,
-            priceChange: data.priceChange,
-            changePercent: data.changePercent,
-            ...performance
-          }
-        } else {
-          // Fallback to purchase price if API fails
-          const performance = calculateHoldingPerformance(holding, holding.purchase_price)
-          
-          return {
-            ...holding,
-            currentPrice: holding.purchase_price,
-            priceChange: 0,
-            changePercent: 0,
-            ...performance
-          }
+    // Get current prices for all holdings using bulk API call
+    const symbols = holdings.map(h => h.symbol).join(',')
+    const apiUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:5000' 
+      : process.env.NEXT_PUBLIC_API_URL || 'https://foresight-api-theta.vercel.app'
+    
+    let stockPrices: { [symbol: string]: any } = {}
+    
+    try {
+      const response = await fetch(`${apiUrl}/api/stocks?symbols=${symbols}`)
+      if (response.ok) {
+        const stocksData = await response.json()
+        stocksData.forEach((stock: any) => {
+          stockPrices[stock.symbol] = stock
+        })
+      } else {
+        console.warn(`Failed to fetch bulk stock prices: ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Error fetching bulk stock prices:', error)
+    }
+
+    // Process each holding with the fetched prices
+    const holdingsWithPrices = holdings.map((holding) => {
+      const stockData = stockPrices[holding.symbol]
+      
+      if (stockData && stockData.currentPrice > 0) {
+        const performance = calculateHoldingPerformance(holding, stockData.currentPrice)
+        
+        return {
+          ...holding,
+          currentPrice: stockData.currentPrice,
+          priceChange: stockData.priceChange,
+          changePercent: stockData.changePercent,
+          ...performance
         }
-      } catch (error) {
-        console.error(`Error fetching price for ${holding.symbol}:`, error)
+      } else {
+        // Fallback to purchase price if API fails or no data
+        console.warn(`No price data for ${holding.symbol}, using purchase price`)
         const performance = calculateHoldingPerformance(holding, holding.purchase_price)
         
         return {
@@ -264,8 +274,6 @@ export const getPortfolioData = async () => {
         }
       }
     })
-
-    const holdingsWithPrices = await Promise.all(pricePromises)
     
     // Calculate portfolio totals
     let totalValue = 0
@@ -344,12 +352,12 @@ export const getPortfolioMarketLeaders = async () => {
     return {
       topGainer: {
         symbol: topGainer.symbol,
-        change: `${topGainer.changePercent >= 0 ? '+' : ''}${topGainer.changePercent.toFixed(1)}% today`,
+        change: `${topGainer.changePercent >= 0 ? '+' : ''}${topGainer.changePercent.toFixed(1)}% (${topGainer.positionChange >= 0 ? '+' : ''}$${topGainer.positionChange.toFixed(2)})`,
         price: topGainer.currentPrice
       },
       topLoser: {
         symbol: topLoser.symbol,
-        change: `${topLoser.changePercent >= 0 ? '+' : ''}${topLoser.changePercent.toFixed(1)}% today`,
+        change: `${topLoser.changePercent >= 0 ? '+' : ''}${topLoser.changePercent.toFixed(1)}% (${topLoser.positionChange >= 0 ? '+' : ''}$${topLoser.positionChange.toFixed(2)})`,
         price: topLoser.currentPrice
       }
     }
