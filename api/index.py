@@ -46,16 +46,8 @@ def load_portfolio():
         if os.path.exists(PORTFOLIO_FILE):
             with open(PORTFOLIO_FILE, 'r') as f:
                 return json.load(f)
-        # Default portfolio if none exists
-        return {
-            "holdings": [
-                {"symbol": "AAPL", "shares": 50, "purchasePrice": 150.00},
-                {"symbol": "GOOGL", "shares": 25, "purchasePrice": 2800.00},
-                {"symbol": "TSLA", "shares": 30, "purchasePrice": 200.00},
-                {"symbol": "MSFT", "shares": 40, "purchasePrice": 300.00},
-                {"symbol": "NVDA", "shares": 20, "purchasePrice": 400.00}
-            ]
-        }
+        # Return empty portfolio if none exists
+        return {"holdings": []}
     except Exception as e:
         print(f"Error loading portfolio: {e}")
         return {"holdings": []}
