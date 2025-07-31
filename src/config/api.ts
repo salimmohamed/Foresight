@@ -17,4 +17,6 @@ export const API_ENDPOINTS = {
   alertManagement: `${API_BASE_URL}/api/alerts`,
   alert: (id: string) => `${API_BASE_URL}/api/alerts/${id}`,
   processAlerts: `${API_BASE_URL}/api/alerts/process`,
+  // Portfolio management endpoints
+  portfolio: `${API_BASE_URL}/api/portfolio`,
 }; 
