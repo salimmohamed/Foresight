@@ -10,8 +10,20 @@ export interface PortfolioHolding {
   symbol: string
   shares: number
   purchase_price: number
-  created_at?: string
-  updated_at?: string
+  purchase_date?: string  // When the holding was purchased
+  created_at?: string     // When record was created in database
+  updated_at?: string     // When record was last updated
+}
+
+export interface PortfolioHoldingWithPerformance extends PortfolioHolding {
+  currentPrice: number
+  priceChange: number
+  changePercent: number
+  positionValue: number
+  positionChange: number
+  daysHeld?: number
+  totalReturn?: number
+  annualizedReturn?: number
 }
 
 export interface Portfolio {
@@ -96,7 +108,7 @@ export const savePortfolioHoldings = async (holdings: PortfolioHolding[]): Promi
   }
 }
 
-// Add a single holding
+// Add a single holding with purchase date tracking
 export const addPortfolioHolding = async (holding: Omit<PortfolioHolding, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
   try {
     const userId = await getCurrentUserId()
@@ -107,7 +119,8 @@ export const addPortfolioHolding = async (holding: Omit<PortfolioHolding, 'id' |
         user_id: userId,
         symbol: holding.symbol.toUpperCase(),
         shares: holding.shares,
-        purchase_price: holding.purchase_price
+        purchase_price: holding.purchase_price,
+        purchase_date: holding.purchase_date || new Date().toISOString() // Use provided date or current date
       })
 
     if (error) {
@@ -172,7 +185,27 @@ export const updatePortfolioHolding = async (holdingId: string, updates: Partial
   }
 }
 
-// Get portfolio data for dashboard (with current prices and calculations)
+// Calculate days held and returns
+const calculateHoldingPerformance = (holding: PortfolioHolding, currentPrice: number) => {
+  const purchaseDate = holding.purchase_date ? new Date(holding.purchase_date) : new Date(holding.created_at || '')
+  const currentDate = new Date()
+  const daysHeld = Math.max(1, Math.floor((currentDate.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
+  
+  const positionValue = holding.shares * currentPrice
+  const positionChange = holding.shares * (currentPrice - holding.purchase_price)
+  const totalReturn = ((currentPrice - holding.purchase_price) / holding.purchase_price) * 100
+  const annualizedReturn = ((Math.pow(1 + totalReturn / 100, 365 / daysHeld) - 1) * 100)
+  
+  return {
+    positionValue,
+    positionChange,
+    totalReturn,
+    annualizedReturn,
+    daysHeld
+  }
+}
+
+// Get portfolio data for dashboard (with current prices and time-based calculations)
 export const getPortfolioData = async () => {
   try {
     const holdings = await loadPortfolioHoldings()
@@ -182,6 +215,9 @@ export const getPortfolioData = async () => {
         totalValue: 0,
         totalChange: 0,
         changePercent: 0,
+        totalInvested: 0,
+        totalReturn: 0,
+        averageAnnualizedReturn: 0,
         holdings: []
       }
     }
@@ -192,28 +228,37 @@ export const getPortfolioData = async () => {
         const response = await fetch(`/api/stock/${holding.symbol}`)
         if (response.ok) {
           const data = await response.json()
+          const performance = calculateHoldingPerformance(holding, data.currentPrice)
+          
           return {
             ...holding,
             currentPrice: data.currentPrice,
             priceChange: data.priceChange,
-            changePercent: data.changePercent
+            changePercent: data.changePercent,
+            ...performance
           }
         } else {
           // Fallback to purchase price if API fails
+          const performance = calculateHoldingPerformance(holding, holding.purchase_price)
+          
           return {
             ...holding,
             currentPrice: holding.purchase_price,
             priceChange: 0,
-            changePercent: 0
+            changePercent: 0,
+            ...performance
           }
         }
       } catch (error) {
         console.error(`Error fetching price for ${holding.symbol}:`, error)
+        const performance = calculateHoldingPerformance(holding, holding.purchase_price)
+        
         return {
           ...holding,
           currentPrice: holding.purchase_price,
           priceChange: 0,
-          changePercent: 0
+          changePercent: 0,
+          ...performance
         }
       }
     })
@@ -224,32 +269,42 @@ export const getPortfolioData = async () => {
     let totalValue = 0
     let totalChange = 0
     let totalInvested = 0
+    let totalReturn = 0
+    let totalDaysHeld = 0
 
     const portfolioHoldings = holdingsWithPrices.map(holding => {
-      const positionValue = holding.shares * holding.currentPrice
-      const positionChange = holding.shares * (holding.currentPrice - holding.purchase_price)
-      const invested = holding.shares * holding.purchase_price
-      
-      totalValue += positionValue
-      totalChange += positionChange
-      totalInvested += invested
+      totalValue += holding.positionValue
+      totalChange += holding.positionChange
+      totalInvested += (holding.shares * holding.purchase_price)
+      totalReturn += (holding.totalReturn || 0)
+      totalDaysHeld += (holding.daysHeld || 1)
 
       return {
         symbol: holding.symbol,
         shares: holding.shares,
         currentPrice: holding.currentPrice,
-        positionValue,
-        positionChange,
-        changePercent: holding.changePercent
+        purchasePrice: holding.purchase_price,
+        purchaseDate: holding.purchase_date,
+        positionValue: holding.positionValue,
+        positionChange: holding.positionChange,
+        changePercent: holding.changePercent,
+        daysHeld: holding.daysHeld,
+        totalReturn: holding.totalReturn,
+        annualizedReturn: holding.annualizedReturn
       }
     })
 
     const changePercent = totalInvested > 0 ? (totalChange / totalInvested) * 100 : 0
+    const averageAnnualizedReturn = portfolioHoldings.length > 0 ? 
+      portfolioHoldings.reduce((sum, h) => sum + (h.annualizedReturn || 0), 0) / portfolioHoldings.length : 0
 
     return {
       totalValue: Math.round(totalValue * 100) / 100,
       totalChange: Math.round(totalChange * 100) / 100,
       changePercent: Math.round(changePercent * 100) / 100,
+      totalInvested: Math.round(totalInvested * 100) / 100,
+      totalReturn: Math.round(totalReturn * 100) / 100,
+      averageAnnualizedReturn: Math.round(averageAnnualizedReturn * 100) / 100,
       holdings: portfolioHoldings
     }
   } catch (error) {
@@ -258,6 +313,9 @@ export const getPortfolioData = async () => {
       totalValue: 0,
       totalChange: 0,
       changePercent: 0,
+      totalInvested: 0,
+      totalReturn: 0,
+      averageAnnualizedReturn: 0,
       holdings: []
     }
   }

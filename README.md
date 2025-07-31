@@ -28,14 +28,148 @@ Foresight has evolved from a CLI application into a full-stack web application f
 
 - **Frontend**: Modern Next.js application with TypeScript, Tailwind CSS, and shadcn/ui components
 - **Backend**: Flask API with comprehensive endpoints for stock data, alerts, and dashboard functionality
+- **Database**: Supabase integration for user authentication and portfolio data persistence
 - **Real-time Monitoring**: Advanced alert system with email notifications and in-app alerts
 - **Dashboard**: Interactive dashboard with portfolio tracking, market leaders, and activity monitoring
+
+## Data Workflow & Architecture
+
+### Portfolio Data Flow
+
+The system implements a comprehensive data workflow that connects user interactions to real-time financial data:
+
+```
+User Action → Frontend → Supabase → Database → Flask API → External APIs
+     ↓
+1. Add Stock → Modal → savePortfolioHoldings() → portfolio_holdings table
+     ↓
+2. View Dashboard → getPortfolioData() → loadPortfolioHoldings() → portfolio_holdings table
+     ↓
+3. Get Prices → fetch('/api/stock/AAPL') → Flask API → Alpha Vantage API
+     ↓
+4. Calculate Totals → Frontend calculations → Display real-time data
+```
+
+### Authentication & User Management
+```typescript
+// User authentication through Supabase
+const getCurrentUserId = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+  return user.id
+}
+```
+
+### Portfolio Management Workflow
+
+#### 1. Adding Portfolio Holdings
+```typescript
+// User adds stock in modal
+const savePortfolio = async () => {
+  const success = await savePortfolioHoldings(portfolioHoldings)
+  // Data flows: Frontend → Supabase → portfolio_holdings table
+}
+```
+
+#### 2. Loading Portfolio Data
+```typescript
+// Dashboard loads user's portfolio
+const loadUserPortfolioHoldings = async () => {
+  const holdings = await loadPortfolioHoldings()
+  // Data flows: Supabase → Frontend → Display in modal
+}
+```
+
+#### 3. Real-time Portfolio Calculations
+```typescript
+// Dashboard displays live portfolio data
+export const getPortfolioData = async () => {
+  // Step 1: Get user's holdings from Supabase
+  const holdings = await loadPortfolioHoldings()
+  
+  // Step 2: Get current prices for each holding
+  const pricePromises = holdings.map(async (holding) => {
+    const response = await fetch(`/api/stock/${holding.symbol}`)
+    const data = await response.json()
+    return { ...holding, currentPrice: data.currentPrice }
+  })
+  
+  // Step 3: Calculate portfolio totals
+  const holdingsWithPrices = await Promise.all(pricePromises)
+  // Calculate totalValue, totalChange, changePercent, etc.
+}
+```
+
+### Database Schema
+
+#### Portfolio Holdings Table
+```sql
+CREATE TABLE portfolio_holdings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  symbol VARCHAR(10) NOT NULL,
+  shares DECIMAL(10,2) NOT NULL,
+  purchase_price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### Row Level Security (RLS)
+```sql
+-- Users can only access their own portfolio data
+ALTER TABLE portfolio_holdings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own portfolio" ON portfolio_holdings
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own portfolio" ON portfolio_holdings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+```
+
+### Real-time Data Integration
+
+#### Stock Price Updates
+```typescript
+// Flask API endpoint for real-time stock data
+@app.route('/api/stock/<symbol>')
+def get_stock_data(symbol):
+    # Fetch from Alpha Vantage API
+    # Return current price, change, percentage change
+    return jsonify({
+        'currentPrice': price,
+        'priceChange': change,
+        'changePercent': percent_change
+    })
+```
+
+#### Portfolio Calculations
+```typescript
+// Frontend calculates portfolio metrics
+const portfolioHoldings = holdingsWithPrices.map(holding => {
+  const positionValue = holding.shares * holding.currentPrice
+  const positionChange = holding.shares * (holding.currentPrice - holding.purchase_price)
+  const invested = holding.shares * holding.purchase_price
+  
+  return {
+    symbol: holding.symbol,
+    shares: holding.shares,
+    currentPrice: holding.currentPrice,
+    positionValue,
+    positionChange,
+    changePercent: holding.changePercent
+  }
+})
+```
 
 ## Technical Implementation
 
 ### Frontend (Next.js)
 - **Modern UI/UX**: Clean, responsive design with dark/light mode support
 - **Dashboard**: Real-time portfolio overview with market data and alerts
+- **Portfolio Management**: Add, edit, and track portfolio holdings
 - **Alert Management**: Create, edit, and manage stock price alerts
 - **Stock Monitoring**: Real-time stock data with price tracking
 - **Authentication**: Protected routes and user session management
@@ -47,7 +181,14 @@ Foresight has evolved from a CLI application into a full-stack web application f
 - **Email Notifications**: Automated email alerts for triggered conditions
 - **Health Monitoring**: API health checks and status endpoints
 
+### Database (Supabase)
+- **User Authentication**: Secure user registration and login
+- **Portfolio Storage**: Persistent storage of user portfolio holdings
+- **Row Level Security**: Data isolation between users
+- **Real-time Updates**: Live data synchronization
+
 ### Core Functionality
+- **Portfolio Tracking**: Real-time portfolio value and performance calculations
 - **Price Monitoring**: Track stock prices and calculate percentage changes
 - **Alert Triggers**: Price-based and percentage-based alert conditions
 - **News Integration**: Relevant news articles for context

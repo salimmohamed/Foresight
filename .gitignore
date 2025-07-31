@@ -452,6 +452,13 @@ Prompts/
 Project/
 __pycache__/
 
+# Cursor IDE files - NEVER commit these
+.cursorrules
+.cursor/
+my-custom-rule.mdc
+*.cursorrules
+.cursorrules.*
+
 # Local configuration files
 config.local.*
 settings.local.*
@@ -528,3 +535,5 @@ test_helper.py
 mock-api.py
 api/alerts.json
 test_portfolio.py
+.cursorrules
+.gitignore
