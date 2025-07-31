@@ -170,4 +170,134 @@ export const updatePortfolioHolding = async (holdingId: string, updates: Partial
     console.error('Error in updatePortfolioHolding:', error)
     return false
   }
+}
+
+// Get portfolio data for dashboard (with current prices and calculations)
+export const getPortfolioData = async () => {
+  try {
+    const holdings = await loadPortfolioHoldings()
+    
+    if (holdings.length === 0) {
+      return {
+        totalValue: 0,
+        totalChange: 0,
+        changePercent: 0,
+        holdings: []
+      }
+    }
+
+    // Get current prices for all holdings
+    const pricePromises = holdings.map(async (holding) => {
+      try {
+        const response = await fetch(`/api/stock/${holding.symbol}`)
+        if (response.ok) {
+          const data = await response.json()
+          return {
+            ...holding,
+            currentPrice: data.currentPrice,
+            priceChange: data.priceChange,
+            changePercent: data.changePercent
+          }
+        } else {
+          // Fallback to purchase price if API fails
+          return {
+            ...holding,
+            currentPrice: holding.purchase_price,
+            priceChange: 0,
+            changePercent: 0
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching price for ${holding.symbol}:`, error)
+        return {
+          ...holding,
+          currentPrice: holding.purchase_price,
+          priceChange: 0,
+          changePercent: 0
+        }
+      }
+    })
+
+    const holdingsWithPrices = await Promise.all(pricePromises)
+    
+    // Calculate portfolio totals
+    let totalValue = 0
+    let totalChange = 0
+    let totalInvested = 0
+
+    const portfolioHoldings = holdingsWithPrices.map(holding => {
+      const positionValue = holding.shares * holding.currentPrice
+      const positionChange = holding.shares * (holding.currentPrice - holding.purchase_price)
+      const invested = holding.shares * holding.purchase_price
+      
+      totalValue += positionValue
+      totalChange += positionChange
+      totalInvested += invested
+
+      return {
+        symbol: holding.symbol,
+        shares: holding.shares,
+        currentPrice: holding.currentPrice,
+        positionValue,
+        positionChange,
+        changePercent: holding.changePercent
+      }
+    })
+
+    const changePercent = totalInvested > 0 ? (totalChange / totalInvested) * 100 : 0
+
+    return {
+      totalValue: Math.round(totalValue * 100) / 100,
+      totalChange: Math.round(totalChange * 100) / 100,
+      changePercent: Math.round(changePercent * 100) / 100,
+      holdings: portfolioHoldings
+    }
+  } catch (error) {
+    console.error('Error in getPortfolioData:', error)
+    return {
+      totalValue: 0,
+      totalChange: 0,
+      changePercent: 0,
+      holdings: []
+    }
+  }
+}
+
+// Get market leaders from user's portfolio
+export const getPortfolioMarketLeaders = async () => {
+  try {
+    const portfolioData = await getPortfolioData()
+    
+    if (!portfolioData.holdings || portfolioData.holdings.length === 0) {
+      return {
+        topGainer: { symbol: "", change: "", price: 0 },
+        topLoser: { symbol: "", change: "", price: 0 }
+      }
+    }
+
+    // Sort holdings by change percentage
+    const sortedHoldings = [...portfolioData.holdings].sort((a, b) => b.changePercent - a.changePercent)
+    
+    const topGainer = sortedHoldings[0]
+    const topLoser = sortedHoldings[sortedHoldings.length - 1]
+
+    return {
+      topGainer: {
+        symbol: topGainer.symbol,
+        change: `${topGainer.changePercent >= 0 ? '+' : ''}${topGainer.changePercent.toFixed(1)}% today`,
+        price: topGainer.currentPrice
+      },
+      topLoser: {
+        symbol: topLoser.symbol,
+        change: `${topLoser.changePercent >= 0 ? '+' : ''}${topLoser.changePercent.toFixed(1)}% today`,
+        price: topLoser.currentPrice
+      }
+    }
+  } catch (error) {
+    console.error('Error in getPortfolioMarketLeaders:', error)
+    return {
+      topGainer: { symbol: "", change: "", price: 0 },
+      topLoser: { symbol: "", change: "", price: 0 }
+    }
+  }
 } 
