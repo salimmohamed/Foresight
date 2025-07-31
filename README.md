@@ -1,4 +1,10 @@
+<div align="center">
+
+![Foresight Logo](foresight-logo.svg)
+
 # Foresight: Trading Insights
+
+</div>
 
 This project began as a humble exercise on Day 36 of the "100 Days of Code: The Complete Python Pro Bootcamp" course. What started as a simple stock monitoring script quickly evolved into a captivating exploration of financial data, real-time alerts, and the immense potential of artificial intelligence in trading. My fascination with leveraging technology to gain an edge in financial markets has driven me to expand this foundational CLI application.
 
