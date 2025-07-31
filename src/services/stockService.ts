@@ -82,7 +82,7 @@ export interface Activity {
 
 export async function fetchPortfolioData(): Promise<PortfolioData> {
   try {
-    const response = await fetch(API_ENDPOINTS.portfolio)
+    const response = await fetch(API_ENDPOINTS.dashboardPortfolio)
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
