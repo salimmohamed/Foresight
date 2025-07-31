@@ -17,6 +17,13 @@ import {
   type MarketLeaders,
   type Activity
 } from "@/services/stockService"
+import { 
+  loadPortfolioHoldings, 
+  savePortfolioHoldings, 
+  addPortfolioHolding, 
+  removePortfolioHolding,
+  type PortfolioHolding 
+} from "@/services/portfolioService"
 import { API_ENDPOINTS } from "@/config/api"
 import styles from './DemoPage.module.css'
 import { useRouter } from "next/navigation"
@@ -48,11 +55,7 @@ export default function DemoPage({
   const [errors, setErrors] = useState<{[key: string]: string}>({})
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
-  const [portfolioHoldings, setPortfolioHoldings] = useState<Array<{
-    symbol: string
-    shares: number
-    purchasePrice: number
-  }>>([])
+  const [portfolioHoldings, setPortfolioHoldings] = useState<PortfolioHolding[]>([])
   const [newHolding, setNewHolding] = useState({
     symbol: "",
     shares: "",
@@ -151,16 +154,10 @@ export default function DemoPage({
     fetchDashboardData(true)
   }
 
-  const loadPortfolioHoldings = async () => {
+  const loadUserPortfolioHoldings = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.portfolio)
-      if (response.ok) {
-        const data = await response.json()
-        setPortfolioHoldings(data.holdings || [])
-      } else {
-        console.error('Failed to load portfolio holdings')
-        setPortfolioHoldings([])
-      }
+      const holdings = await loadPortfolioHoldings()
+      setPortfolioHoldings(holdings)
     } catch (error) {
       console.error('Error loading portfolio holdings:', error)
       setPortfolioHoldings([])
@@ -175,22 +172,15 @@ export default function DemoPage({
 
     try {
       setSavingPortfolio(true)
-      const response = await fetch(API_ENDPOINTS.portfolio, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ holdings: portfolioHoldings }),
-      })
+      const success = await savePortfolioHoldings(portfolioHoldings)
       
-      if (response.ok) {
+      if (success) {
         alert('Portfolio saved successfully!')
         setIsPortfolioModalOpen(false)
         // Refresh dashboard data to show updated portfolio
         fetchDashboardData(true)
       } else {
-        const errorData = await response.json()
-        alert(`Failed to save portfolio: ${errorData.error || 'Unknown error'}`)
+        alert('Failed to save portfolio. Please try again.')
       }
     } catch (error) {
       console.error('Error saving portfolio:', error)
@@ -208,14 +198,14 @@ export default function DemoPage({
 
     const symbol = newHolding.symbol.toUpperCase().trim()
     const shares = parseInt(newHolding.shares)
-    const purchasePrice = parseFloat(newHolding.purchasePrice)
+    const purchase_price = parseFloat(newHolding.purchasePrice)
 
     // Validation
     if (shares <= 0) {
       alert('Shares must be greater than 0')
       return
     }
-    if (purchasePrice <= 0) {
+    if (purchase_price <= 0) {
       alert('Purchase price must be greater than 0')
       return
     }
@@ -231,10 +221,10 @@ export default function DemoPage({
       return
     }
 
-    const holding = {
+    const holding: PortfolioHolding = {
       symbol,
       shares,
-      purchasePrice
+      purchase_price
     }
     
     setPortfolioHoldings(prev => [...prev, holding])
@@ -249,7 +239,7 @@ export default function DemoPage({
   }
 
   const openPortfolioModal = () => {
-    loadPortfolioHoldings()
+    loadUserPortfolioHoldings()
     setIsPortfolioModalOpen(true)
   }
 
@@ -512,13 +502,13 @@ export default function DemoPage({
                       <div>
                         <span className="text-muted-foreground">Total Invested:</span>
                         <span className="ml-2 font-semibold">
-                          ${portfolioHoldings.reduce((sum, h) => sum + (h.shares * h.purchasePrice), 0).toLocaleString()}
+                          ${portfolioHoldings.reduce((sum, h) => sum + (h.shares * h.purchase_price), 0).toLocaleString()}
                         </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Avg Price:</span>
                         <span className="ml-2 font-semibold">
-                          ${(portfolioHoldings.reduce((sum, h) => sum + (h.shares * h.purchasePrice), 0) / 
+                          ${(portfolioHoldings.reduce((sum, h) => sum + (h.shares * h.purchase_price), 0) / 
                              portfolioHoldings.reduce((sum, h) => sum + h.shares, 0)).toFixed(2)}
                         </span>
                       </div>
@@ -538,10 +528,10 @@ export default function DemoPage({
                           <div>
                             <span className="font-semibold">{holding.symbol}</span>
                             <span className="text-sm text-muted-foreground ml-2">
-                              {holding.shares} shares @ ${holding.purchasePrice}
+                              {holding.shares} shares @ ${holding.purchase_price}
                             </span>
                             <div className="text-xs text-muted-foreground mt-1">
-                              Total: ${(holding.shares * holding.purchasePrice).toLocaleString()}
+                              Total: ${(holding.shares * holding.purchase_price).toLocaleString()}
                             </div>
                           </div>
                           <Button
