@@ -19,6 +19,7 @@ USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
 
 # Alert storage (in production, use a proper database)
 ALERTS_FILE = "alerts.json"
+PORTFOLIO_FILE = "portfolio.json"
 
 def load_alerts():
     """Load alerts from JSON file."""
@@ -38,6 +39,34 @@ def save_alerts(alerts):
             json.dump(alerts, f, indent=2)
     except Exception as e:
         print(f"Error saving alerts: {e}")
+
+def load_portfolio():
+    """Load user portfolio from JSON file."""
+    try:
+        if os.path.exists(PORTFOLIO_FILE):
+            with open(PORTFOLIO_FILE, 'r') as f:
+                return json.load(f)
+        # Default portfolio if none exists
+        return {
+            "holdings": [
+                {"symbol": "AAPL", "shares": 50, "purchasePrice": 150.00},
+                {"symbol": "GOOGL", "shares": 25, "purchasePrice": 2800.00},
+                {"symbol": "TSLA", "shares": 30, "purchasePrice": 200.00},
+                {"symbol": "MSFT", "shares": 40, "purchasePrice": 300.00},
+                {"symbol": "NVDA", "shares": 20, "purchasePrice": 400.00}
+            ]
+        }
+    except Exception as e:
+        print(f"Error loading portfolio: {e}")
+        return {"holdings": []}
+
+def save_portfolio(portfolio):
+    """Save user portfolio to JSON file."""
+    try:
+        with open(PORTFOLIO_FILE, 'w') as f:
+            json.dump(portfolio, f, indent=2)
+    except Exception as e:
+        print(f"Error saving portfolio: {e}")
 
 def process_alert(alert):
     """Process an alert using the logic from main.py"""
@@ -373,46 +402,54 @@ def get_stock(symbol):
 def get_portfolio_data():
     """Get portfolio overview data."""
     try:
-        # Get stock data for portfolio holdings
-        portfolio_symbols = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'NVDA']
+        # Load user's actual portfolio
+        portfolio = load_portfolio()
         portfolio_data = []
         total_value = 0
         total_change = 0
         
-        for symbol in portfolio_symbols:
+        for holding in portfolio["holdings"]:
+            symbol = holding["symbol"]
+            shares = holding["shares"]
+            purchase_price = holding["purchasePrice"]
+            
+            # Get current stock data
             stock_data = get_stock_data(symbol)
             if "error" not in stock_data and "mock" not in stock_data:
                 metrics = get_stock_metrics(stock_data)
-                # Simulate portfolio holdings (random shares between 10-100)
-                shares = random.randint(10, 100)
-                position_value = shares * metrics["current_price"]
-                position_change = shares * metrics["price_change"]
+                current_price = metrics["current_price"]
+                position_value = shares * current_price
+                position_change = shares * (current_price - purchase_price)
+                change_percent = ((current_price - purchase_price) / purchase_price) * 100
                 
                 portfolio_data.append({
                     "symbol": symbol,
                     "shares": shares,
-                    "currentPrice": metrics["current_price"],
+                    "currentPrice": current_price,
+                    "purchasePrice": purchase_price,
                     "positionValue": position_value,
                     "positionChange": position_change,
-                    "changePercent": metrics["change_percent"]
+                    "changePercent": change_percent
                 })
                 
                 total_value += position_value
                 total_change += position_change
             else:
-                # Use mock data for portfolio
+                # Use mock data if API fails
                 metrics = generate_mock_stock_data(symbol)
-                shares = random.randint(10, 100)
-                position_value = shares * metrics["current_price"]
-                position_change = shares * metrics["price_change"]
+                current_price = metrics["current_price"]
+                position_value = shares * current_price
+                position_change = shares * (current_price - purchase_price)
+                change_percent = ((current_price - purchase_price) / purchase_price) * 100
                 
                 portfolio_data.append({
                     "symbol": symbol,
                     "shares": shares,
-                    "currentPrice": metrics["current_price"],
+                    "currentPrice": current_price,
+                    "purchasePrice": purchase_price,
                     "positionValue": position_value,
                     "positionChange": position_change,
-                    "changePercent": metrics["change_percent"]
+                    "changePercent": change_percent
                 })
                 
                 total_value += position_value
@@ -718,6 +755,36 @@ def process_alerts():
     except Exception as e:
         print(f"❌ Error processing alerts: {e}")
         return jsonify({"error": "Failed to process alerts"}), 500
+
+@app.route('/api/portfolio', methods=['GET'])
+def get_portfolio():
+    """Get user portfolio holdings."""
+    try:
+        portfolio = load_portfolio()
+        return jsonify(portfolio)
+    except Exception as e:
+        print(f"❌ Error getting portfolio: {e}")
+        return jsonify({"holdings": []})
+
+@app.route('/api/portfolio', methods=['POST'])
+def update_portfolio():
+    """Update user portfolio holdings."""
+    try:
+        data = request.get_json()
+        if not data or 'holdings' not in data:
+            return jsonify({"error": "Invalid portfolio data"}), 400
+        
+        # Validate holdings data
+        for holding in data['holdings']:
+            if not all(key in holding for key in ['symbol', 'shares', 'purchasePrice']):
+                return jsonify({"error": "Invalid holding data"}), 400
+        
+        save_portfolio(data)
+        return jsonify({"message": "Portfolio updated successfully"}), 200
+        
+    except Exception as e:
+        print(f"❌ Error updating portfolio: {e}")
+        return jsonify({"error": "Failed to update portfolio"}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

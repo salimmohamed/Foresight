@@ -526,3 +526,5 @@ PROJECT_CONTEXT.md
 mock-api.py
 test_helper.py
 mock-api.py
+api/alerts.json
+test_portfolio.py

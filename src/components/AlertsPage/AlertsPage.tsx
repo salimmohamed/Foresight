@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { AlertForm } from "./AlertForm"
 import { EditForm } from "./EditForm"
 import { AlertsTable } from "./AlertsTable"
@@ -23,6 +24,7 @@ export default function AlertsPage({
   onProfileClick, 
   onSettingsClick 
 }: AlertsPageProps) {
+  const searchParams = useSearchParams()
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isEditFormOpen, setIsEditFormOpen] = useState(false)
@@ -35,6 +37,14 @@ export default function AlertsPage({
   useEffect(() => {
     loadAlerts()
   }, [])
+
+  // Check for create query parameter and open form automatically
+  useEffect(() => {
+    const shouldCreate = searchParams.get('create')
+    if (shouldCreate === 'true') {
+      setIsFormOpen(true)
+    }
+  }, [searchParams])
 
   const loadAlerts = async () => {
     try {
